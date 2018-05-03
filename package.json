@@ -1,0 +1,23 @@
+{
+  "name": "dbei-bot",
+  "version": "1.0.0",
+  "description": "Bot to track DBEI (Department of Business, Enterprise & Innovation) processing dates for employment permits",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dbei",
+    "employment",
+    "permits",
+    "processing",
+    "dates"
+  ],
+  "author": "Harshad Ranganathan",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "cheerio": "^1.0.0-rc.2",
+    "lodash": "^4.17.10"
+  }
+}
