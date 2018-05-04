@@ -9,7 +9,9 @@ const
     bodyParser = require('body-parser'),
     app = express().use(bodyParser.json());
 
-const URL = 'https://dbei.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Current-Application-Processing-Dates/';
+const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
+const DBEI_URL = 'https://dbei.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Current-Application-Processing-Dates/';
+const SEND_API = 'https://graph.facebook.com/v2.6/me/messages';
 
 const codes = {
     'Employment Permit - Trusted Partner': 'EPTP',
@@ -27,7 +29,7 @@ const selectors = {
 
 function scrapeData(callback) {
     let processingDates = {};
-    axios.get(`${URL}`)
+    axios.get(`${DBEI_URL}`)
         .then((response) => {
             let html = response.data;
             let $ = cheerio.load(html);
@@ -49,6 +51,49 @@ function scrapeData(callback) {
         });
 }
 
+function callSendAPI(sender_psid, response) {
+    let request_body = {
+        "recipient": {
+            "id": sender_psid
+        },
+        "message": response
+    }
+    axios({
+        method: 'POST',
+        url: `${SEND_API}`,
+        params: {
+            access_token: PAGE_ACCESS_TOKEN
+        },
+        data: request_body
+    }).catch((error) => {
+        if (error.response) {
+            console.log(error.response.data);
+            console.log(error.response.status);
+            console.log(error.response.headers);
+        } else if (error.request) {
+            console.log(error.request);
+        } else {
+            console.log('Error: ', error.message);
+        }
+    });
+}
+
+function handleMessage(sender_psid, received_message) {
+    let response;
+    scrapeData((processingDates) => {
+        if(received_message.text) {
+            response = {
+                "text": JSON.stringify(processingDates)
+            }
+        }
+        callSendAPI(sender_psid, response);
+    });
+}
+
+function handlePostback(sender_psid, received_postback) {
+
+}
+
 app.get('/webhook', (req, res) => {
     let VERIFY_TOKEN = process.env.VERIFY_TOKEN;
     let mode = req.query['hub.mode'];
@@ -68,10 +113,14 @@ app.post('/webhook', (req, res) => {
     if(body.object === 'page') {
         body.entry.forEach(function(entry) {
             let webhook_event = entry.messaging[0];
+            let sender_psid = webhook_event.sender.id;
+            if (webhook_event.message) {
+                handleMessage(sender_psid, webhook_event.message);        
+            } else if (webhook_event.postback) {
+                handlePostback(sender_psid, webhook_event.postback);
+            }
         });
-        scrapeData((processingDates) => {
-            res.status(200).send(processingDates);
-        });
+        res.status(200).send('EVENT_RECEIVED');
     } else {
         res.sendStatus(404);
     }
