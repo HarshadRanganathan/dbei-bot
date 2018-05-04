@@ -1,6 +1,12 @@
-let _ = require('lodash');
-let axios = require('axios');
-let cheerio = require('cheerio');
+'use strict';
+
+const _ = require('lodash');
+const axios = require('axios');
+const cheerio = require('cheerio');
+const 
+    express = require('express'),
+    bodyParser = require('body-parser'),
+    app = express().use(bodyParser.json());
 
 const URL = 'https://dbei.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Current-Application-Processing-Dates/';
 
@@ -19,11 +25,11 @@ const selectors = {
 }
 
 function scrapeData(callback) {
-    const processingDates = {};
+    let processingDates = {};
     axios.get(`${URL}`)
         .then((response) => {
-            const html = response.data;
-            const $ = cheerio.load(html);
+            let html = response.data;
+            let $ = cheerio.load(html);
             _.forEach(selectors, (selector, code) => {
                 processingDates[code] = $(selector).text();
             });
@@ -42,7 +48,32 @@ function scrapeData(callback) {
         });
 }
 
-scrapeData((processingDates) => {
-    console.log(processingDates);
+app.get('/webhook', (req, res) => {
+    let VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+    let mode = req.query['hub.mode'];
+    let token = req.query['hub.verify_token'];
+    let challenge = req.query['hub.challenge'];
+    if(mode && token) {
+        if(mode == 'subscribe' && token == VERIFY_TOKEN) {
+            res.status(200).send(challenge);
+        } else {
+            res.sendStatus(403);
+        }
+    }
 });
 
+app.post('/webhook', (req, res) => {
+    let body = req.body;
+    if(body.object === 'page') {
+        body.entry.forEach(function(entry) {
+            let webhook_event = entry.messaging[0];
+        });
+        scrapeData((processingDates) => {
+            res.status(200).send(processingDates);
+        });
+    } else {
+        res.sendStatus(404);
+    }
+});
+
+app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
