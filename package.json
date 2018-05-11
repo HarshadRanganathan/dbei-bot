@@ -1,10 +1,14 @@
 {
   "name": "dbei-bot",
   "version": "1.0.0",
-  "description": "Bot to track DBEI (Department of Business, Enterprise & Innovation) processing dates for employment permits",
+  "description": "Bot to track DBEI (Department of Business, Enterprise & Innovation) processing dates for employment permits and support letter",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
   },
   "keywords": [
     "dbei",

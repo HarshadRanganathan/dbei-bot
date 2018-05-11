@@ -45,18 +45,11 @@ function scrapeData(callback) {
 }
 
 function callSendAPI(sender_psid, response) {
-    let request_body = {
-        "recipient": {
-            "id": sender_psid
-        },
-        "message": response
-    }
+    let request_body = { "recipient": { "id": sender_psid }, "message": response };
     axios({
         method: 'POST',
         url: `${SEND_API}`,
-        params: {
-            access_token: PAGE_ACCESS_TOKEN
-        },
+        params: { access_token: PAGE_ACCESS_TOKEN },
         data: request_body
     }).catch((error) => {
         if (error.response) {
@@ -77,10 +70,7 @@ function handleMessage(sender_psid, received_message) {
         scrapeData((processingDates) => {
             let elements = []
             _.forEach(processingDates, (date, title) => {
-                elements.push({
-                    'title': title,
-                    'subtitle': date
-                });
+                elements.push( { 'title': title, 'subtitle': date } );
             });
             response = {
                 "attachment": {
