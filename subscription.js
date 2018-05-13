@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 const constants = require('./constants');
@@ -51,17 +52,16 @@ function getAllSubscriptions() {
     try {
         const docs = db.get(constants.SUBSCRIPTIONS)
                     .cloneDeep()
-                    .value();
+                    .value();                   
         return _.map(docs, 'psid');
     } catch(err) {
         console.log(err);
-    } finally {
         return [];
-    }
+    } 
 }
 
 module.exports = {
     addSubscription: addSubscription,
     removeSubscription: removeSubscription,
-    subscriptions: getAllSubscriptions
+    getAllSubscriptions: getAllSubscriptions
 }
