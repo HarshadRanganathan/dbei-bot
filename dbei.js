@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const constants = require('./constants');
 
 const DBEI_URL = 'https://dbei.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Current-Application-Processing-Dates/';
 const selectors = {
@@ -32,7 +33,7 @@ function scrapeData() {
                 } else {
                     console.log('Error: ', error.message);
                 }
-                reject('ERR: Unable to retrieve current processing dates');
+                reject(constants.SCRAPING_ERROR);
             });
     });
 }

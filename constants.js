@@ -7,5 +7,6 @@ module.exports = Object.freeze({
     UNSUBSCRIBE_MESSAGE: 'Simply send \'unsubscribe\' to stop receiving the notifications',
     UNSUBSCRIBE_SUCCESS: 'You have been sucessfully unsubscribed',
     UNSUBSCRIBE_FAILED: 'Oops! There was an error in unsubscribing you. Please reach out to https://fb.me/dbei-bot',
-    GREETING: 'Hey there! Current processing dates'
+    GREETING: 'Hey there! Current processing dates',
+    SCRAPING_ERROR: 'Unable to retrieve current processing dates. Please try again after some time'
 });

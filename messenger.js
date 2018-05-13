@@ -27,6 +27,25 @@ function callSendAPI(sender_psid, response) {
     });
 }
 
+function sendCurrentProcessingDates(sender_psid, processingDates) {
+    let elements = [];
+    _.forEach(processingDates, (date, title) => {
+        elements.push( { 'title': title, 'subtitle': date } );
+    });
+    response = {
+        "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "list",
+                "top_element_style": "compact",
+                "elements": elements
+            }
+        }
+    }
+    callSendAPI(sender_psid, { text: constants.GREETING } );
+    callSendAPI(sender_psid, response);
+}
+
 module.exports = {
     handleMessage: function(sender_psid, received_message) {
         let response;
@@ -39,22 +58,11 @@ module.exports = {
         } else if(received_message.text) {
             dbei.scrapeData()
                 .then((processingDates) => {
-                    let elements = []
-                    _.forEach(processingDates, (date, title) => {
-                        elements.push( { 'title': title, 'subtitle': date } );
-                    });
-                    response = {
-                        "attachment": {
-                            "type": "template",
-                            "payload": {
-                                "template_type": "list",
-                                "top_element_style": "compact",
-                                "elements": elements
-                            }
-                        }
+                    if(_.keys(processingDates).length === 4) {
+                        sendCurrentProcessingDates(sender_psid, processingDates);
+                    } else {
+                        callSendAPI(sender_psid, { text: err } );
                     }
-                    callSendAPI(sender_psid, { text: constants.GREETING } );
-                    callSendAPI(sender_psid, response);
                 })
                 .catch((err) => {
                     callSendAPI(sender_psid, { text: err } );

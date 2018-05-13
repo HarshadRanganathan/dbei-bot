@@ -8,7 +8,7 @@ db.defaults( { subscriptions: [] } ).write();
 
 function subscriberExists(sender_psid) {
     let found = false;
-    let doc = db.get(constants.SUBSCRIPTIONS)
+    const doc = db.get(constants.SUBSCRIPTIONS)
                 .find( { psid: sender_psid } )
                 .value();
     if(typeof doc != "undefined") found = true;
@@ -47,7 +47,21 @@ function removeSubscription(sender_psid) {
     }
 }
 
+function getAllSubscriptions() {
+    try {
+        const docs = db.get(constants.SUBSCRIPTIONS)
+                    .cloneDeep()
+                    .value();
+        return _.map(docs, 'psid');
+    } catch(err) {
+        console.log(err);
+    } finally {
+        return [];
+    }
+}
+
 module.exports = {
     addSubscription: addSubscription,
-    removeSubscription: removeSubscription
+    removeSubscription: removeSubscription,
+    subscriptions: getAllSubscriptions
 }
