@@ -1,24 +1,53 @@
-const os = require('os');
-const fs = require('fs');
+const low = require('lowdb')
+const FileSync = require('lowdb/adapters/FileSync')
+const constants = require('./constants');
+const adapter = new FileSync('db.json')
+const db = low(adapter)
 
-function addSubscriber(sender_psid) {
-    return new Promise((resolve, reject) => {
-        let fileStream = fs.createWriteStream('.subscribers', { flags: 'a' });
-        fileStream.write(sender_psid + os.EOL);
-        fileStream.on('finish', () => { resolve("Subscription Successful"); } )
-        .on('error', (err) => {
-            console.log('Failed to register new subscriber with psid [%s]', sender_psid);
-            console.log(err);
-            reject('ERR: Subscription failed');
-        });
-        fileStream.end();
-    });
+db.defaults( { subscriptions: [] } ).write();
+
+function subscriberExists(sender_psid) {
+    let found = false;
+    let doc = db.get(constants.SUBSCRIPTIONS)
+                .find( { psid: sender_psid } )
+                .value();
+    if(typeof doc != "undefined") found = true;
+    return found;
 }
 
-addSubscriber('1080444444438592')
-.then((message) => {
-    console.log(message);
-})
-.catch((err) => {
-    console.log(err);
-});
+function addSubscription(sender_psid) {
+    try {
+        if(!subscriberExists(sender_psid)) {
+            db.get(constants.SUBSCRIPTIONS)
+            .push( { psid: sender_psid, subscription_date: new Date(Date.now()) } )
+            .write();
+            return constants.SUBSCRIPTION_SUCCESS;
+        } else {
+            return constants.SUBSCRIBER_EXISTS;
+        }
+    } catch(err) {
+        console.log(err);
+        return constants.SUBSCRIPTION_FAILED;
+    }
+}
+
+function removeSubscription(sender_psid) {
+    try {
+        if(subscriberExists(sender_psid)) {
+            db.get(constants.SUBSCRIPTIONS) 
+            .remove( { psid: sender_psid } )
+            .write();
+            return constants.UNSUBSCRIBE_SUCCESS;
+        } else {
+            return constants.SUBSCRIBER_NOT_EXISTS;
+        }
+    } catch(err) {
+        console.log(err);
+        return constants.UNSUBSCRIBE_FAILED;
+    }
+}
+
+module.exports = {
+    addSubscription: addSubscription,
+    removeSubscription: removeSubscription
+}

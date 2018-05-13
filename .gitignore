@@ -61,7 +61,7 @@ typings/
 # dotenv environment variables file
 .env
 
-# subscribers file
-.subscribers
+# lowdb file
+db.json
 
 # End of https://www.gitignore.io/api/node

@@ -1,6 +1,8 @@
 const _ = require('lodash');
 const axios = require('axios');
+const constants  = require('./constants');
 const dbei =  require('./dbei');
+const subscription = require('./subscription');
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const SEND_API = 'https://graph.facebook.com/v2.6/me/messages';
@@ -29,7 +31,11 @@ module.exports = {
     handleMessage: function(sender_psid, received_message) {
         let response;
         if(received_message.text == 'subscribe') {
-
+            let message = subscription.addSubscription(sender_psid);
+            callSendAPI(sender_psid, { text: message } );
+            if(constants.SUBSCRIPTION_SUCCESS === message) callSendAPI(sender_psid, { text: constants.UNSUBSCRIBE_MESSAGE } );
+        } else if(received_message.text == 'unsubscribe') {
+            callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) } );
         } else if(received_message.text) {
             dbei.scrapeData()
                 .then((processingDates) => {
@@ -47,11 +53,11 @@ module.exports = {
                             }
                         }
                     }
-                    callSendAPI(sender_psid, { 'text': 'Hey there! Current processing dates' } );
+                    callSendAPI(sender_psid, { text: constants.GREETING } );
                     callSendAPI(sender_psid, response);
                 })
                 .catch((err) => {
-                    callSendAPI(sender_psid, { 'text': err } );
+                    callSendAPI(sender_psid, { text: err } );
                 });
         }
     }
