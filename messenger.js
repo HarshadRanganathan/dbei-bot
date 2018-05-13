@@ -8,13 +8,26 @@ const subscription = require('./subscription');
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const SEND_API = 'https://graph.facebook.com/v2.6/me/messages';
 
-function callSendAPI(psid, response) {
-    let request_body = { "recipient": { "id": psid }, "message": response };
+function callSendAPI(psid, message, mtype) {
+    let data;
+    if(constants.SUBSCRIPTIONS === mtype) {
+        data = { 
+            "recipient": { "id": psid }, 
+            "message": message, 
+            "messaging_type": "MESSAGE_TAG", 
+            "tag": "NON_PROMOTIONAL_SUBSCRIPTION" 
+        };
+    } else {
+        data = { 
+            "recipient": { "id": psid }, 
+            "message": message 
+        };
+    }
     axios({
         method: 'POST',
         url: `${SEND_API}`,
         params: { access_token: PAGE_ACCESS_TOKEN },
-        data: request_body
+        data: data
     }).catch((error) => {
         if (error.response) {
             console.log(error.response.data);
@@ -28,7 +41,7 @@ function callSendAPI(psid, response) {
     });
 }
 
-function sendCurrentProcessingDates(psids, processingDates) {
+function sendCurrentProcessingDates(psids, processingDates, mtype) {
     let elements = [];
     _.forEach(processingDates, (date, title) => {
         elements.push( { 'title': title, 'subtitle': date } );
@@ -44,17 +57,17 @@ function sendCurrentProcessingDates(psids, processingDates) {
         }
     }
     _.forEach(psids, (psid) => {
-        callSendAPI(psid, { text: constants.GREETING } );
-        callSendAPI(psid, response);
+        callSendAPI(psid, { text: constants.GREETING }, mtype);
+        callSendAPI(psid, response, mtype);
     });
 }
 
-schedule.scheduleJob('', function() {
+schedule.scheduleJob('0 */10 * ? * *', function() {
     dbei.scrapeData()
         .then((processingDates) => {
             if(_.keys(processingDates).length === 4) {
                 let psids = subscription.getAllSubscriptions();
-                sendCurrentProcessingDates(psids, processingDates);
+                sendCurrentProcessingDates(psids, processingDates, constants.SUBSCRIPTIONS);
             } 
         }).catch((err) => {
             console.log(err);
@@ -66,22 +79,22 @@ module.exports = {
         let response;
         if(received_message.text == 'subscribe') {
             let message = subscription.addSubscription(sender_psid);
-            callSendAPI(sender_psid, { text: message } );
+            callSendAPI(sender_psid, { text: message }, constants.RESPONSE);
             if(constants.SUBSCRIPTION_SUCCESS === message) callSendAPI(sender_psid, { text: constants.UNSUBSCRIBE_MESSAGE } );
         } else if(received_message.text == 'unsubscribe') {
-            callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) } );
+            callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) }, constants.RESPONSE);
         } else if(received_message.text) {
             dbei.scrapeData()
                 .then((processingDates) => {
                     if(_.keys(processingDates).length === 4) {
                         let psids = [sender_psid];
-                        sendCurrentProcessingDates(psids, processingDates);
+                        sendCurrentProcessingDates(psids, processingDates, constants.RESPONSE);
                     } else {
-                        callSendAPI(sender_psid, { text: constants.SCRAPING_ERROR } );
+                        callSendAPI(sender_psid, { text: constants.SCRAPING_ERROR }, constants.RESPONSE);
                     }
                 })
                 .catch((err) => {
-                    callSendAPI(sender_psid, { text: err } );
+                    callSendAPI(sender_psid, { text: err }, constants.RESPONSE);
                 });
         }
     }

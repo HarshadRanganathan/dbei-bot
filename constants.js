@@ -1,4 +1,5 @@
 module.exports = Object.freeze({
+    RESPONSE: 'Response',
     SUBSCRIPTIONS: 'subscriptions',
     SUBSCRIBER_EXISTS: 'Hey there! You are already subscribed to notifications',
     SUBSCRIBER_NOT_EXISTS: 'Hey there! You are not subscribed to any notifications',
