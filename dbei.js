@@ -10,8 +10,8 @@ const selectors = {
     'Support Letters - Stamp 4': 'table:contains("Requests for Support Letters for a Stamp 4") tr:contains("Requests received") td:nth-of-type(2)'
 }
 
-module.exports = {
-    scrapeData: function(callback) {
+function scrapeData() {
+    return new Promise(function(resolve, reject) {
         let processingDates = {};
         axios.get(`${DBEI_URL}`)
             .then((response) => {
@@ -20,7 +20,7 @@ module.exports = {
                 _.forEach(selectors, (selector, title) => {
                     processingDates[title] = $(selector).text();
                 });
-                callback(processingDates);
+                resolve(processingDates);
             })
             .catch((error) => {
                 if (error.response) {
@@ -32,6 +32,11 @@ module.exports = {
                 } else {
                     console.log('Error: ', error.message);
                 }
+                reject('ERR: Unable to retrieve current processing dates');
             });
-    }
+    });
+}
+
+module.exports = {
+    scrapeData: scrapeData
 }

@@ -28,25 +28,31 @@ function callSendAPI(sender_psid, response) {
 module.exports = {
     handleMessage: function(sender_psid, received_message) {
         let response;
-        if(received_message.text) {
-            dbei.scrapeData((processingDates) => {
-                let elements = []
-                _.forEach(processingDates, (date, title) => {
-                    elements.push( { 'title': title, 'subtitle': date } );
-                });
-                response = {
-                    "attachment": {
-                        "type": "template",
-                        "payload": {
-                            "template_type": "list",
-                            "top_element_style": "compact",
-                            "elements": elements
+        if(received_message.text == 'subscribe') {
+
+        } else if(received_message.text) {
+            dbei.scrapeData()
+                .then((processingDates) => {
+                    let elements = []
+                    _.forEach(processingDates, (date, title) => {
+                        elements.push( { 'title': title, 'subtitle': date } );
+                    });
+                    response = {
+                        "attachment": {
+                            "type": "template",
+                            "payload": {
+                                "template_type": "list",
+                                "top_element_style": "compact",
+                                "elements": elements
+                            }
                         }
                     }
-                }
-                callSendAPI(sender_psid, { 'text' : 'Hey there! Current processing dates' });
-                callSendAPI(sender_psid, response);
-            });
+                    callSendAPI(sender_psid, { 'text': 'Hey there! Current processing dates' } );
+                    callSendAPI(sender_psid, response);
+                })
+                .catch((err) => {
+                    callSendAPI(sender_psid, { 'text': err } );
+                });
         }
     }
 }
