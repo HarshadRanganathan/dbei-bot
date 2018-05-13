@@ -63,6 +63,7 @@ function sendCurrentProcessingDates(psids, processingDates, mtype) {
 }
 
 schedule.scheduleJob('0 */10 * ? * *', function() {
+    console.log('Subscription schedule triggered');
     dbei.scrapeData()
         .then((processingDates) => {
             if(_.keys(processingDates).length === 4) {
@@ -77,11 +78,11 @@ schedule.scheduleJob('0 */10 * ? * *', function() {
 module.exports = {
     handleMessage: function(sender_psid, received_message) {
         let response;
-        if(received_message.text == 'subscribe') {
+        if(received_message.text.toUpperCase() == 'subscribe'.toUpperCase()) {
             let message = subscription.addSubscription(sender_psid);
             callSendAPI(sender_psid, { text: message }, constants.RESPONSE);
             if(constants.SUBSCRIPTION_SUCCESS === message) callSendAPI(sender_psid, { text: constants.UNSUBSCRIBE_MESSAGE } );
-        } else if(received_message.text == 'unsubscribe') {
+        } else if(received_message.text.toUpperCase() == 'unsubscribe'.toUpperCase()) {
             callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) }, constants.RESPONSE);
         } else if(received_message.text) {
             dbei.scrapeData()
