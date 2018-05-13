@@ -1,7 +1,7 @@
 'use strict';
 
 require('dotenv').config();
-const messenger = require('./messenger');
+const messenger = require('./src/component/messenger');
 const 
     express = require('express'),
     bodyParser = require('body-parser'),

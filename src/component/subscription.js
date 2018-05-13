@@ -1,8 +1,8 @@
 const _ = require('lodash');
+const constants = require('./constants');
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
-const constants = require('./constants');
-const adapter = new FileSync('db.json')
+const adapter = new FileSync('../../db.json')
 const db = low(adapter)
 
 db.defaults( { subscriptions: [] } ).write();
