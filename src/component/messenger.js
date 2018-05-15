@@ -62,7 +62,7 @@ function sendCurrentProcessingDates(psids, processingDates, mtype) {
     });
 }
 
-schedule.scheduleJob('0 17 * * MON', function() {
+schedule.scheduleJob('0 17 * * FRI', function() {
     console.log('Subscription notification triggered');
     dbei.scrapeData()
         .then((processingDates) => {
