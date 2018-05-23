@@ -3,7 +3,7 @@ module.exports = Object.freeze({
     SUBSCRIPTIONS: 'subscriptions',
     SUBSCRIBER_EXISTS: 'Hey there! You are already subscribed to notifications',
     SUBSCRIBER_NOT_EXISTS: 'Hey there! You are not subscribed to any notifications',
-    SUBSCRIPTION_SUCCESS: 'Thanks for subscribing. You will now receive notifications every Friday',
+    SUBSCRIPTION_SUCCESS: 'Thanks for subscribing. You will now receive notifications every Monday, Wednesday and Friday',
     SUBSCRIPTION_FAILED: 'Oops! There was an error registering your subscription. Please reach out to https://fb.me/dbei-bot',
     UNSUBSCRIBE_MESSAGE: 'Simply send \'unsubscribe\' to stop receiving the notifications',
     UNSUBSCRIBE_SUCCESS: 'You have been sucessfully unsubscribed',
