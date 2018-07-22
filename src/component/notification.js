@@ -48,13 +48,13 @@ function getDtsUpdatedCategories(processingDates) {
 }
 
 function getCurrentProcessingDate(processingDates, category) {
-    let title = categories[category];
+    let title = dbei.categories[category];
     return processingDates[title];
 }
 
 function generateNotificationFile(psids, category, processingDate, response) {
     return new Promise((resolve, reject) => {
-        let fileStream = fs.createWriteStream(path.join(notificationDir, category));
+        let fileStream = fs.createWriteStream(path.resolve(notificationDir, category));
         let data = {
             psids: psids,
             category: category,
@@ -86,14 +86,14 @@ function updateCategoryDateInDB(category, curProcessingDate, resolve, reject) {
 
 function processNotifications() {
     return new Promise((resolve, reject) => {
-        fs.readdir(notificationDir, (err, files) => {
+        fs.readdir(path.resolve(notificationDir), (err, files) => {
             if(err) {
                 console.log(err);
                 reject(constants.ERR_NOTIF_102);   
             }
             files.forEach((file, index) => {
                 let data = '';
-                let readStream = fs.createReadStream(path.join(notificationDir, file));
+                let readStream = fs.createReadStream(path.resolve(notificationDir, file));
                 readStream.on('data', (chunk) => {
                     data += chunk;
                 });
