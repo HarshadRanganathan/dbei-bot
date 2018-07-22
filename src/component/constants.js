@@ -11,4 +11,8 @@ module.exports = Object.freeze({
     UNSUBSCRIBE_MESSAGE: 'Simply send \'unsubscribe\' to stop receiving the notifications',
     UNSUBSCRIBE_SUCCESS: 'You have been sucessfully unsubscribed',
     UNSUBSCRIBE_FAILED: 'Oops! There was an error in unsubscribing you. Please reach out to https://fb.me/dbei-bot',   
+    ERR_NOTIF_100: 'Notification file not generated',
+    ERR_NOTIF_101: 'Cannot update current processing date in data.json',
+    ERR_NOTIF_102: 'Unable to read notification directory',
+    ERR_NOTIF_103: 'Unable to delete notification file'
 });

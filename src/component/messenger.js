@@ -94,7 +94,12 @@ schedule.scheduleJob('*/30 9-17 * * *', function() {
 });
 
 schedule.scheduleJob('*/45 9-17 * * *', function() {
-    notification.processNotifications();
+    notification.processNotifications()
+    .catch((err) => {
+      if(err === constants.ERR_NOTIF_101 || err === constants.ERR_NOTIF_103)  {
+          process.exit(1);
+      }
+    });
 });
 
 module.exports = {

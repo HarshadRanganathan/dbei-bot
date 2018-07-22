@@ -10,8 +10,6 @@ const adapter = new FileSync('data.json');
 const db = low(adapter);
 const notificationDir = '../../notifications/';
 
-db.defaults( { currentProcessingDates: [] } ).write();
-
 function callSendAPI(psid, message) {
     let data = { 
         "recipient": { "id": psid }, 
@@ -41,10 +39,10 @@ function getDtsUpdatedCategories(processingDates) {
     let categories = [];
     _.forEach(processingDates, (curDate, title) => {
         let category = _.findKey(dbei.categories, (val, key) => { return val === title });
-        let dbCatDate = db.get(constants.CURRENT_PROCESSING_DATES)
+        let doc = db.get(constants.CURRENT_PROCESSING_DATES)
             .find( { category: category } )
             .value();
-        if(dbCatDate != curDate) categories.push(category);
+        if(doc.date != curDate) categories.push(category);
     });
     return categories;
 }
@@ -63,24 +61,26 @@ function generateNotificationFile(psids, category, processingDate, response) {
             processingDate: processingDate,
             response: JSON.stringify(response)
         };
-        fileStream.write(JSON.stringify(data) + os.EOL);
+        fileStream.write(JSON.stringify(data, null, 4) + os.EOL);
         fileStream.on('finish', () => { resolve("Notification File Created"); } )
         .on('error', (err) => {
             console.log(err);
-            reject('ERR: Notification file not generated for category: ' + category);
+            reject(constants.ERR_NOTIF_100);
         });
         fileStream.end();
     });
 }
 
-function updateCategoryDateInDB(category, curProcessingDate) {
+function updateCategoryDateInDB(category, curProcessingDate, resolve, reject) {
     try {
         db.get(constants.CURRENT_PROCESSING_DATES)
-        .find( { category: category })
+        .find( { category: category } )
         .assign( { date: curProcessingDate } )
         .write();
+        resolve('Notification successfully processed for category: ' + category);
     } catch (err) {
         console.log(err);
+        reject(constants.ERR_NOTIF_101);
     }
 }
 
@@ -89,7 +89,7 @@ function processNotifications() {
         fs.readdir(notificationDir, (err, files) => {
             if(err) {
                 console.log(err);
-                reject('ERR: Unable to read notification directory contents');   
+                reject(constants.ERR_NOTIF_102);   
             }
             files.forEach((file, index) => {
                 let data = '';
@@ -101,13 +101,13 @@ function processNotifications() {
                 _.forEach(notification.psids, (psid) => {
                     callSendAPI(psid, notification.response);
                 });
-                fs.unlink(path.join(notificationDir, file), (err) => {
+                fs.unlinkSync(path.join(notificationDir, file), (err) => {
                     if(err) {
                         console.log(err);
-                        reject('ERR: Unable to delete notification file');   
+                        reject(constants.ERR_NOTIF_103);   
                     }
                 });
-                updateCategoryDateInDB();
+                updateCategoryDateInDB(notification.category, notification.processingDate, resolve, reject);
             });
         });
     });

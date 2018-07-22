@@ -1,6 +1,10 @@
 'use strict';
 
 require('dotenv').config();
+const _ = require('lodash');
+const os = require('os');
+const fs = require('fs');
+const dbei = require('./src/component/dbei');
 const messenger = require('./src/component/messenger');
 const subscription = require('./src/component/subscription');
 const 
@@ -43,4 +47,24 @@ app.post('/webhook', (req, res) => {
     }
 });
 
-app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
+app.listen(process.env.PORT || 1337, () => {
+    dbei.scrapeData()
+        .then((processingDates) => {
+            let fileStream = fs.createWriteStream('data.json');
+            let elements = [];
+            _.forEach(processingDates, (date, title) => {
+                elements.push( { category: _.findKey(dbei.categories, (val, key) => { return val === title }), date: date } );
+            });
+            fileStream.write(JSON.stringify({ currentProcessingDates: elements }, null, 4) + os.EOL);
+            fileStream.on('finish', () => { console.log("Data file inititalized"); } )
+            .on('error', (err) => {
+                console.log(err);
+                process.exit(1);
+            });
+            fileStream.end();
+        })
+        .catch((err) => {
+            console.log(err);
+            process.exit(1);
+        });
+});
