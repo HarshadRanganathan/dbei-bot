@@ -8,7 +8,7 @@ const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 const adapter = new FileSync('data.json');
 const db = low(adapter);
-const notificationDir = '../../notifications/';
+const notificationDir = path.join(__dirname, '..', '..', 'notifications');
 
 function callSendAPI(psid, message) {
     let data = { 
@@ -42,7 +42,7 @@ function getDtsUpdatedCategories(processingDates) {
         let doc = db.get(constants.CURRENT_PROCESSING_DATES)
             .find( { category: category } )
             .value();
-        if(doc.date != curDate) categories.push(category);
+        if(doc != null && doc.date != curDate) categories.push(category);
     });
     return categories;
 }
@@ -54,7 +54,7 @@ function getCurrentProcessingDate(processingDates, category) {
 
 function generateNotificationFile(psids, category, processingDate, response) {
     return new Promise((resolve, reject) => {
-        let fileStream = fs.createWriteStream(path.resolve(notificationDir, category));
+        let fileStream = fs.createWriteStream(path.join(notificationDir, category));
         let data = {
             psids: psids,
             category: category,
@@ -86,14 +86,14 @@ function updateCategoryDateInDB(category, curProcessingDate, resolve, reject) {
 
 function processNotifications() {
     return new Promise((resolve, reject) => {
-        fs.readdir(path.resolve(notificationDir), (err, files) => {
+        fs.readdir(path.join(notificationDir), (err, files) => {
             if(err) {
                 console.log(err);
                 reject(constants.ERR_NOTIF_102);   
             }
             files.forEach((file, index) => {
                 let data = '';
-                let readStream = fs.createReadStream(path.resolve(notificationDir, file));
+                let readStream = fs.createReadStream(path.join(notificationDir, file));
                 readStream.on('data', (chunk) => {
                     data += chunk;
                 });

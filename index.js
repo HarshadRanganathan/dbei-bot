@@ -50,22 +50,18 @@ app.post('/webhook', (req, res) => {
 app.listen(process.env.PORT || 1337, () => {
     dbei.scrapeData()
         .then((processingDates) => {
-            fs.stat('data.json', (err, stat) => {
-                if(err != null && err.code == 'ENOENT') {
-                    let fileStream = fs.createWriteStream('data.json');
-                    let elements = [];
-                    _.forEach(processingDates, (date, title) => {
-                        elements.push( { category: _.findKey(dbei.categories, (val, key) => { return val === title }), date: date } );
-                    });
-                    fileStream.write(JSON.stringify({ currentProcessingDates: elements }, null, 4) + os.EOL);
-                    fileStream.on('finish', () => { console.log("Data file inititalized"); } )
-                    .on('error', (err) => {
-                        console.log(err);
-                        process.exit(1);
-                    });
-                    fileStream.end();
-                }
+            let fileStream = fs.createWriteStream('data.json');
+            let elements = [];
+            _.forEach(processingDates, (date, title) => {
+                elements.push( { category: _.findKey(dbei.categories, (val, key) => { return val === title }), date: date } );
             });
+            fileStream.write(JSON.stringify({ currentProcessingDates: elements }, null, 4) + os.EOL);
+            fileStream.on('finish', () => { console.log("Data file inititalized"); } )
+            .on('error', (err) => {
+                console.log(err);
+                process.exit(1);
+            });
+            fileStream.end();
         })
         .catch((err) => {
             console.log(err);
