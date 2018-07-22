@@ -36,9 +36,9 @@ function callSendAPI(psid, message) {
     });
 }
 
-function getCurrentProcessingDatesByTitleTemplate(processingDateByTitle) {
+function getProcessingDtsByTitleListTemplate(processingDtsByTitle) {
     let elements = [];
-    _.forEach(processingDateByTitle, (date, title) => {
+    _.forEach(processingDtsByTitle, (date, title) => {
         elements.push( { 'title': title, 'subtitle': date } );
     });
     let response = {
@@ -54,7 +54,24 @@ function getCurrentProcessingDatesByTitleTemplate(processingDateByTitle) {
     return response;
 }
 
-function getSubscriptionOptionsTemplate(sender_psid) {
+function getProcessingDtsByTitleGenericTemplate(processingDtsByTitle) {
+    let elements = [];
+    _.forEach(processingDtsByTitle, (date, title) => {
+        elements.push( { 'title': title, 'subtitle': date } );
+    });
+    let response = {
+        "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "generic",
+                "elements": elements
+            }
+        }
+    };
+    return response;
+}
+
+function getSubscriptionTemplate(sender_psid) {
     let elements = [];
     _.forEach(dbei.categories, (title, category) => {
         elements.push( { 'title': title, buttons: [ 
@@ -108,8 +125,8 @@ schedule.scheduleJob('*/30 9-17 * * *', function() {
                 let dtsUpdatedCategories = notification.getDtsUpdatedCategories(processingDates);
                 _.forEach(dtsUpdatedCategories, (category) => {
                     let psids = subscription.getSubscribers(category);
-                    let processingDate = notification.getCurrentProcessingDateByTitle(processingDates, category); 
-                    let response = getCurrentProcessingDatesByTitleTemplate(processingDate);
+                    let processingDtsByTitle = notification.getCurrentProcessingDtByTitle(processingDates, category); 
+                    let response = getProcessingDtsByTitleGenericTemplate(processingDtsByTitle);
                     notification.generateNotificationFile(psids, category, processingDate, response);
                 });
             }
@@ -129,16 +146,16 @@ module.exports = {
     handleMessage: function(sender_psid, received_message) {
         let response;
         if(received_message.text.toUpperCase() == 'subscribe'.toUpperCase()) {
-            response = getSubscriptionOptionsTemplate(sender_psid);
+            response = getSubscriptionTemplate(sender_psid);
             callSendAPI(sender_psid, response);
         } else if(received_message.text.toUpperCase() == 'unsubscribe'.toUpperCase()) {
             callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) });
         } else if(received_message.text) {
             dbei.scrapeData()
-                .then((processingDates) => {
-                    if(_.keys(processingDates).length === 4) {
+                .then((processingDtsByTitle) => {
+                    if(_.keys(processingDtsByTitle).length === 4) {
                         let psids = [sender_psid];
-                        response = getCurrentProcessingDatesByTitleTemplate(processingDates);
+                        response = getProcessingDtsByTitleListTemplate(processingDtsByTitle);
                         _.forEach(psids, (psid) => {
                             callSendAPI(psid, { text: constants.GREETING });
                             callSendAPI(psid, response);

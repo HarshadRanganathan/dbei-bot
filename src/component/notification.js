@@ -51,12 +51,12 @@ function getDtsUpdatedCategories(processingDates) {
     return categories;
 }
 
-function getCurrentProcessingDateByTitle(processingDates, category) {
-    let processingDate = [];
+function getCurrentProcessingDtByTitle(processingDtsByTitle, category) {
+    let processingDtByTitle = {};
     let title = dbei.categories[category];
     let date = processingDates[title];
-    processingDate[title] = date
-    return processingDate;
+    processingDtByTitle[title] = date
+    return processingDtByTitle;
 }
 
 function generateNotificationFile(psids, category, processingDate, response) {
@@ -141,7 +141,7 @@ function processNotifications() {
 
 module.exports = {
     getDtsUpdatedCategories: getDtsUpdatedCategories,
-    getCurrentProcessingDate: getCurrentProcessingDateByTitle,
+    getCurrentProcessingDtByTitle: getCurrentProcessingDtByTitle,
     generateNotificationFile: generateNotificationFile,
     processNotifications: processNotifications
 }

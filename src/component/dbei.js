@@ -19,15 +19,15 @@ const selectors = {
 
 function scrapeData() {
     return new Promise(function(resolve, reject) {
-        let processingDates = {};
+        let processingDtsByTitle = {};
         axios.get(`${DBEI_URL}`)
             .then((response) => {
                 let html = response.data;
                 let $ = cheerio.load(html);
                 _.forEach(selectors, (selector, title) => {
-                    processingDates[title] = $(selector).text();
+                    processingDtsByTitle[title] = $(selector).text();
                 });
-                resolve(processingDates);
+                resolve(processingDtsByTitle);
             })
             .catch((error) => {
                 if (error.response) {
