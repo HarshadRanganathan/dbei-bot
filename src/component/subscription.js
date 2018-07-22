@@ -7,20 +7,20 @@ const db = low(adapter)
 
 db.defaults( { subscriptions: [] } ).write();
 
-function subscriberExists(sender_psid) {
+function subscriberExists(psid, category) {
     let found = false;
     const doc = db.get(constants.SUBSCRIPTIONS)
-                .find( { psid: sender_psid } )
+                .find( { psid: psid, category: category } )
                 .value();
     if(typeof doc != "undefined") found = true;
     return found;
 }
 
-function addSubscription(sender_psid) {
+function addSubscription(psid, category) {
     try {
-        if(!subscriberExists(sender_psid)) {
+        if(!subscriberExists(psid, category)) {
             db.get(constants.SUBSCRIPTIONS)
-            .push( { psid: sender_psid, subscription_date: new Date(Date.now()) } )
+            .push( { psid: psid, category: category, subscription_date: new Date(Date.now()) } )
             .write();
             return constants.SUBSCRIPTION_SUCCESS;
         } else {

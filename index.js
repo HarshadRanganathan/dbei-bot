@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 const messenger = require('./src/component/messenger');
+const subscription = require('./src/component/subscription');
 const 
     express = require('express'),
     bodyParser = require('body-parser'),
@@ -24,7 +25,8 @@ app.get('/webhook', (req, res) => {
 app.get('/subscription', (req, res) => {
     let psid = req.query['psid'];
     let category = req.query['category'];
-    res.status(200).send('You have been successfully subscribed to receive notifications');
+    let response = subscription.addSubscription(psid, category);
+    res.status(200).send(response);
 });
 
 app.post('/webhook', (req, res) => {
