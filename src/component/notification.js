@@ -17,7 +17,7 @@ function callSendAPI(psid, message) {
         "messaging_type": "MESSAGE_TAG", 
         "tag": "NON_PROMOTIONAL_SUBSCRIPTION" 
     };
-    axios({
+    return axios({
         method: 'POST',
         url: `${SEND_API}`,
         params: { access_token: PAGE_ACCESS_TOKEN },
@@ -87,28 +87,53 @@ function updateCategoryDateInDB(category, curProcessingDate, resolve, reject) {
 function processNotifications() {
     return new Promise((resolve, reject) => {
         fs.readdir(path.join(notificationDir), (err, files) => {
-            if(err) {
-                console.log(err);
-                reject(constants.ERR_NOTIF_102);   
-            }
-            files.forEach((file, index) => {
+            if(err) return reject(constants.ERR_NOTIF_102);   
+            resolve(files);
+        });
+    })
+    .then((files) => {
+        let notifications = files.map((file) => {
+            return new Promise((resolve, reject) => {
                 let data = '';
                 let readStream = fs.createReadStream(path.join(notificationDir, file));
                 readStream.on('data', (chunk) => {
                     data += chunk;
+                })
+                .on('end', () => {
+                    resolve(data);
+                })
+                .on('error', (err) => {
+                    return reject(err);
                 });
-                let notification = JSON.parse(data);
-                _.forEach(notification.psids, (psid) => {
-                    callSendAPI(psid, notification.response);
-                });
-                fs.unlinkSync(path.join(notificationDir, file), (err) => {
-                    if(err) {
-                        console.log(err);
-                        reject(constants.ERR_NOTIF_103);   
-                    }
-                });
-                updateCategoryDateInDB(notification.category, notification.processingDate, resolve, reject);
             });
+        });
+        return Promise.all(notifications);
+    })
+    .then((notifications) => {
+        console.log(notifications);
+        let actions = notifications.map((notification) => {
+            let msgs = notification.psids.map((psid) => {
+                callSendAPI(psid, data.response);
+            });
+            return Promise.all(msgs);
+        });
+        Promise.all(actions);
+    })
+    .then((responses) => {
+        console.log(responses);
+        return new Promise((resolve, reject) => {
+            fs.unlink(path.join(notificationDir, file), (err) => {
+                if(err) {
+                    console.log(err);
+                    return reject(constants.ERR_NOTIF_103);   
+                }
+                resolve();
+            });
+        });
+    })
+    .then(() => {
+        return new Promise((resolve, reject) => {
+            updateCategoryDateInDB(data.category, data.processingDate, resolve, reject);
         });
     });
 }

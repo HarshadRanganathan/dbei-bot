@@ -84,7 +84,7 @@ schedule.scheduleJob('*/30 9-17 * * *', function() {
                 _.forEach(dtsUpdatedCategories, (category) => {
                     let psids = subscription.getSubscribers(category);
                     let processingDate = notification.getCurrentProcessingDate(processingDates, category); 
-                    let response = getCurrentProcessingDatesTemplate(processingDate);
+                    let response = getCurrentProcessingDatesTemplate([processingDate]);
                     notification.generateNotificationFile(psids, category, processingDate, response);
                 });
             }
