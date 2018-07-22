@@ -118,16 +118,23 @@ function refreshDataStore() {
     });
 }
 
-schedule.scheduleJob('*/30 9-17 * * *', function() {
+schedule.scheduleJob('*/1 * * * *', function() {
     dbei.scrapeData()
         .then((processingDates) => {
             if(_.keys(processingDates).length === 4) {
                 let dtsUpdatedCategories = notification.getDtsUpdatedCategories(processingDates);
                 _.forEach(dtsUpdatedCategories, (category) => {
                     let psids = subscription.getSubscribers(category);
-                    let processingDtsByTitle = notification.getCurrentProcessingDtByTitle(processingDates, category); 
-                    let response = getProcessingDtsByTitleGenericTemplate(processingDtsByTitle);
-                    notification.generateNotificationFile(psids, category, processingDate, response);
+                    let processingDtByTitle = notification.getCurrentProcessingDtByTitle(processingDates, category); 
+                    let processingDt = processingDtByTitle[dbei.categories[category]];
+                    let response = getProcessingDtsByTitleGenericTemplate(processingDtByTitle);
+                    notification.generateNotificationFile(psids, category, processingDt, response)
+                    .then((response) => {
+                      console.log(response);  
+                    })
+                    .catch((err) => {
+                      console.log(err);                        
+                    });
                 });
             }
         }).catch((err) => {
@@ -135,7 +142,7 @@ schedule.scheduleJob('*/30 9-17 * * *', function() {
         });
 });
 
-schedule.scheduleJob('*/45 9-17 * * *', function() {
+schedule.scheduleJob('*/2 * * * *', function() {
     notification.processNotifications()
     .then(() => {
         refreshDataStore();

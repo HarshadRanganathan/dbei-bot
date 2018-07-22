@@ -54,7 +54,7 @@ function getDtsUpdatedCategories(processingDates) {
 function getCurrentProcessingDtByTitle(processingDtsByTitle, category) {
     let processingDtByTitle = {};
     let title = dbei.categories[category];
-    let date = processingDates[title];
+    let date = processingDtsByTitle[title];
     processingDtByTitle[title] = date
     return processingDtByTitle;
 }
@@ -71,7 +71,6 @@ function generateNotificationFile(psids, category, processingDate, response) {
         fileStream.write(JSON.stringify(data, null, 4) + os.EOL);
         fileStream.on('finish', () => { resolve("Notification File Created"); } )
         .on('error', (err) => {
-            console.log(err);
             reject(constants.ERR_NOTIF_100);
         });
         fileStream.end();
@@ -133,7 +132,7 @@ function processNotifications() {
     })
     .catch((err) => {
         console.log(err);        
-        if(err === constants.ERR_NOTIF_103)  {
+        if(constants.ERR_NOTIF_103 === err)  {
             process.exit(1);
         }
     });
