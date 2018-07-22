@@ -20,7 +20,7 @@ function addSubscription(psid, category) {
     try {
         if(!subscriberExists(psid, category)) {
             db.get(constants.SUBSCRIPTIONS)
-            .push( { psid: psid, category: category, subscriptionStartDate: new Date(Date.now()) } )
+            .push( { psid: psid, category: category, startDate: new Date(Date.now()) } )
             .write();
             return constants.SUBSCRIPTION_SUCCESS;
         } else {
