@@ -41,12 +41,12 @@ function callSendAPI(psid, message, mtype) {
     });
 }
 
-function sendCurrentProcessingDates(psids, processingDates, mtype) {
+function getCurrentProcessingDatesTemplate(processingDates) {
     let elements = [];
     _.forEach(processingDates, (date, title) => {
         elements.push( { 'title': title, 'subtitle': date } );
     });
-    response = {
+    let response = {
         "attachment": {
             "type": "template",
             "payload": {
@@ -55,11 +55,34 @@ function sendCurrentProcessingDates(psids, processingDates, mtype) {
                 "elements": elements
             }
         }
-    }
-    _.forEach(psids, (psid) => {
-        callSendAPI(psid, { text: constants.GREETING }, mtype);
-        callSendAPI(psid, response, mtype);
+    };
+    return response;
+}
+
+function getSubscriptionOptionsTemplate() {
+    let elements = [];
+    _.forEach(dbei.selectors, (selector, title) => {
+        elements.push( { 'title': title, buttons: [ 
+            { 
+                "title": "Subscribe", 
+                "type": "web_url", 
+                "url": "https://peterssendreceiveapp.ngrok.io/collection", 
+                "messenger_extensions": true, 
+                "webview_height_ratio": "compact" 
+            } 
+        ] } );
     });
+    let response = {
+        "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "list",
+                "top_element_style": "compact",
+                "elements": elements
+            }
+        }
+    };
+    return response;
 }
 
 schedule.scheduleJob('0 17 * * 1,3,5', function() {
@@ -68,7 +91,11 @@ schedule.scheduleJob('0 17 * * 1,3,5', function() {
         .then((processingDates) => {
             if(_.keys(processingDates).length === 4) {
                 let psids = subscription.getAllSubscriptions();
-                sendCurrentProcessingDates(psids, processingDates, constants.SUBSCRIPTIONS);
+                let response = getCurrentProcessingDatesTemplate(processingDates);
+                _.forEach(psids, (psid) => {
+                    callSendAPI(psid, { text: constants.GREETING }, constants.SUBSCRIPTIONS);
+                    callSendAPI(psid, response, constants.SUBSCRIPTIONS);
+                });
             } 
         }).catch((err) => {
             console.log(err);
@@ -79,9 +106,8 @@ module.exports = {
     handleMessage: function(sender_psid, received_message) {
         let response;
         if(received_message.text.toUpperCase() == 'subscribe'.toUpperCase()) {
-            let message = subscription.addSubscription(sender_psid);
-            callSendAPI(sender_psid, { text: message }, constants.RESPONSE);
-            if(constants.SUBSCRIPTION_SUCCESS === message) callSendAPI(sender_psid, { text: constants.UNSUBSCRIBE_MESSAGE } );
+            response = getSubscriptionOptionsTemplate();
+            callSendAPI(sender_psid, response, constants.RESPONSE);
         } else if(received_message.text.toUpperCase() == 'unsubscribe'.toUpperCase()) {
             callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) }, constants.RESPONSE);
         } else if(received_message.text) {
@@ -89,7 +115,11 @@ module.exports = {
                 .then((processingDates) => {
                     if(_.keys(processingDates).length === 4) {
                         let psids = [sender_psid];
-                        sendCurrentProcessingDates(psids, processingDates, constants.RESPONSE);
+                        response = getCurrentProcessingDatesTemplate(processingDates);
+                        _.forEach(psids, (psid) => {
+                            callSendAPI(psid, { text: constants.GREETING }, constants.RESPONSE);
+                            callSendAPI(psid, response, constants.RESPONSE);
+                        });
                     } else {
                         callSendAPI(sender_psid, { text: constants.SCRAPING_ERROR }, constants.RESPONSE);
                     }
