@@ -1,5 +1,8 @@
 module.exports = Object.freeze({
+    CURRENT_PROCESSING_DATES: 'currentProcessingDates',
+    GREETING: 'Hey there! Current processing dates',
     RESPONSE: 'Response',
+    SCRAPING_ERROR: 'Unable to retrieve current processing dates. Please try again after some time',
     SUBSCRIPTIONS: 'subscriptions',
     SUBSCRIBER_EXISTS: 'You are already subscribed to receive notifications for this category',
     SUBSCRIBER_NOT_EXISTS: 'Hey there! You are not subscribed to any notifications',
@@ -7,7 +10,5 @@ module.exports = Object.freeze({
     SUBSCRIPTION_FAILED: 'Oops! There was an error registering your subscription. Please reach out to https://fb.me/dbei-bot',
     UNSUBSCRIBE_MESSAGE: 'Simply send \'unsubscribe\' to stop receiving the notifications',
     UNSUBSCRIBE_SUCCESS: 'You have been sucessfully unsubscribed',
-    UNSUBSCRIBE_FAILED: 'Oops! There was an error in unsubscribing you. Please reach out to https://fb.me/dbei-bot',
-    GREETING: 'Hey there! Current processing dates',
-    SCRAPING_ERROR: 'Unable to retrieve current processing dates. Please try again after some time'
+    UNSUBSCRIBE_FAILED: 'Oops! There was an error in unsubscribing you. Please reach out to https://fb.me/dbei-bot',   
 });

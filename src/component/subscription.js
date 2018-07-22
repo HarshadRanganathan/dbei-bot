@@ -1,9 +1,9 @@
 const _ = require('lodash');
 const constants = require('./constants');
-const low = require('lowdb')
-const FileSync = require('lowdb/adapters/FileSync')
-const adapter = new FileSync('db.json')
-const db = low(adapter)
+const low = require('lowdb');
+const FileSync = require('lowdb/adapters/FileSync');
+const adapter = new FileSync('db.json');
+const db = low(adapter);
 
 db.defaults( { subscriptions: [] } ).write();
 
@@ -20,7 +20,7 @@ function addSubscription(psid, category) {
     try {
         if(!subscriberExists(psid, category)) {
             db.get(constants.SUBSCRIPTIONS)
-            .push( { psid: psid, category: category, subscription_date: new Date(Date.now()) } )
+            .push( { psid: psid, category: category, subscriptionStartDate: new Date(Date.now()) } )
             .write();
             return constants.SUBSCRIPTION_SUCCESS;
         } else {
@@ -48,20 +48,20 @@ function removeSubscription(sender_psid) {
     }
 }
 
-function getAllSubscriptions() {
+function getSubscribers(category) {
     try {
         const docs = db.get(constants.SUBSCRIPTIONS)
                     .cloneDeep()
-                    .value();                   
-        return _.map(docs, 'psid');
+                    .value();    
+        return _.filter(docs, (doc) => { return doc.category === category } ).map(doc => doc.psid);
     } catch(err) {
         console.log(err);
         return [];
-    } 
+    }
 }
 
 module.exports = {
     addSubscription: addSubscription,
     removeSubscription: removeSubscription,
-    getAllSubscriptions: getAllSubscriptions
+    getSubscribers: getSubscribers
 }

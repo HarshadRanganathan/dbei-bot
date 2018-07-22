@@ -4,25 +4,16 @@ const schedule = require('node-schedule');
 const constants  = require('./constants');
 const dbei =  require('./dbei');
 const subscription = require('./subscription');
+const notification = require('./notification');
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const SEND_API = 'https://graph.facebook.com/v2.6/me/messages';
 
-function callSendAPI(psid, message, mtype) {
-    let data;
-    if(constants.SUBSCRIPTIONS === mtype) {
-        data = { 
-            "recipient": { "id": psid }, 
-            "message": message, 
-            "messaging_type": "MESSAGE_TAG", 
-            "tag": "NON_PROMOTIONAL_SUBSCRIPTION" 
-        };
-    } else {
-        data = { 
-            "recipient": { "id": psid }, 
-            "message": message 
-        };
-    }
+function callSendAPI(psid, message) {
+    let data = { 
+        "recipient": { "id": psid }, 
+        "message": message 
+    };
     axios({
         method: 'POST',
         url: `${SEND_API}`,
@@ -85,21 +76,25 @@ function getSubscriptionOptionsTemplate(sender_psid) {
     return response;
 }
 
-schedule.scheduleJob('0 17 * * 1,3,5', function() {
-    console.log('Subscription notification triggered');
+schedule.scheduleJob('*/30 9-17 * * *', function() {
     dbei.scrapeData()
         .then((processingDates) => {
             if(_.keys(processingDates).length === 4) {
-                let psids = subscription.getAllSubscriptions();
-                let response = getCurrentProcessingDatesTemplate(processingDates);
-                _.forEach(psids, (psid) => {
-                    callSendAPI(psid, { text: constants.GREETING }, constants.SUBSCRIPTIONS);
-                    callSendAPI(psid, response, constants.SUBSCRIPTIONS);
+                let dtsUpdatedCategories = notification.getDtsUpdatedCategories(processingDates);
+                _.forEach(dtsUpdatedCategories, (category) => {
+                    let psids = subscription.getSubscribers(category);
+                    let processingDate = notification.getCurrentProcessingDate(processingDates, category); 
+                    let response = getCurrentProcessingDatesTemplate(processingDate);
+                    notification.generateNotificationFile(psids, category, processingDate, response);
                 });
-            } 
+            }
         }).catch((err) => {
             console.log(err);
         });
+});
+
+schedule.scheduleJob('*/45 9-17 * * *', function() {
+    notification.processNotifications();
 });
 
 module.exports = {
@@ -107,9 +102,9 @@ module.exports = {
         let response;
         if(received_message.text.toUpperCase() == 'subscribe'.toUpperCase()) {
             response = getSubscriptionOptionsTemplate(sender_psid);
-            callSendAPI(sender_psid, response, constants.RESPONSE);
+            callSendAPI(sender_psid, response);
         } else if(received_message.text.toUpperCase() == 'unsubscribe'.toUpperCase()) {
-            callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) }, constants.RESPONSE);
+            callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) });
         } else if(received_message.text) {
             dbei.scrapeData()
                 .then((processingDates) => {
@@ -117,15 +112,15 @@ module.exports = {
                         let psids = [sender_psid];
                         response = getCurrentProcessingDatesTemplate(processingDates);
                         _.forEach(psids, (psid) => {
-                            callSendAPI(psid, { text: constants.GREETING }, constants.RESPONSE);
-                            callSendAPI(psid, response, constants.RESPONSE);
+                            callSendAPI(psid, { text: constants.GREETING });
+                            callSendAPI(psid, response);
                         });
                     } else {
-                        callSendAPI(sender_psid, { text: constants.SCRAPING_ERROR }, constants.RESPONSE);
+                        callSendAPI(sender_psid, { text: constants.SCRAPING_ERROR });
                     }
                 })
                 .catch((err) => {
-                    callSendAPI(sender_psid, { text: err }, constants.RESPONSE);
+                    callSendAPI(sender_psid, { text: err });
                 });
         }
     }
