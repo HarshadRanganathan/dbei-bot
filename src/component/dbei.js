@@ -4,12 +4,18 @@ const cheerio = require('cheerio');
 const constants = require('./constants');
 
 const DBEI_URL = 'https://dbei.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Current-Application-Processing-Dates/';
-export const selectors = {
+const categories = {
+    'EPTP': 'Employment Permit - Trusted Partner',
+    'EPS': 'Employment Permit - Standard',
+    'RTPS': 'Reviews - Trusted Partner & Standard',
+    'SLS4': 'Support Letters - Stamp 4'
+};
+const selectors = {
     'Employment Permit - Trusted Partner': 'table:contains("Employment Permit applications received by Employer Type") tr:contains("Trusted Partner") td:nth-of-type(2)',
     'Employment Permit - Standard': 'table:contains("Employment Permit applications received by Employer Type") tr:contains("Standard") td:nth-of-type(2)',
     'Reviews - Trusted Partner & Standard': 'table:contains("Reviews for Trusted Partner and Standard Employment Permit Applications") tr:contains("Reviews received") td:nth-of-type(2)',
     'Support Letters - Stamp 4': 'table:contains("Requests for Support Letters for a Stamp 4") tr:contains("Requests received") td:nth-of-type(2)'
-}
+};
 
 function scrapeData() {
     return new Promise(function(resolve, reject) {
@@ -39,5 +45,6 @@ function scrapeData() {
 }
 
 module.exports = {
-    scrapeData: scrapeData
+    scrapeData: scrapeData,
+    categories: categories
 }

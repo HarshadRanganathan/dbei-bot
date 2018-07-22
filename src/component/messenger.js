@@ -59,14 +59,14 @@ function getCurrentProcessingDatesTemplate(processingDates) {
     return response;
 }
 
-function getSubscriptionOptionsTemplate() {
+function getSubscriptionOptionsTemplate(sender_psid) {
     let elements = [];
-    _.forEach(dbei.selectors, (selector, title) => {
+    _.forEach(dbei.categories, (title, category) => {
         elements.push( { 'title': title, buttons: [ 
             { 
                 "title": "Subscribe", 
                 "type": "web_url", 
-                "url": "https://peterssendreceiveapp.ngrok.io/collection", 
+                "url": "https://dbei-bot.rharshad.com/subscription?psid=" + sender_psid + "&category=" + category, 
                 "messenger_extensions": true, 
                 "webview_height_ratio": "compact" 
             } 
@@ -106,7 +106,7 @@ module.exports = {
     handleMessage: function(sender_psid, received_message) {
         let response;
         if(received_message.text.toUpperCase() == 'subscribe'.toUpperCase()) {
-            response = getSubscriptionOptionsTemplate();
+            response = getSubscriptionOptionsTemplate(sender_psid);
             callSendAPI(sender_psid, response, constants.RESPONSE);
         } else if(received_message.text.toUpperCase() == 'unsubscribe'.toUpperCase()) {
             callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) }, constants.RESPONSE);

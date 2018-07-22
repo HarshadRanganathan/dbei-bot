@@ -21,6 +21,12 @@ app.get('/webhook', (req, res) => {
     }
 });
 
+app.get('/subscription', (req, res) => {
+    let psid = req.query['psid'];
+    let category = req.query['category'];
+    res.status(200).send('You have been successfully subscribed to receive notifications');
+});
+
 app.post('/webhook', (req, res) => {
     let body = req.body;
     if(body.object === 'page') {
