@@ -2,6 +2,7 @@ const _ = require('lodash');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 const constants = require('./constants');
 const dbei =  require('./dbei');
 const low = require('lowdb');
@@ -10,16 +11,19 @@ const adapter = new FileSync('data.json');
 const db = low(adapter);
 const notificationDir = path.join(__dirname, '..', '..', 'notifications');
 
+const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
+const SEND_API = process.env.SEND_API;
+
 function callSendAPI(psid, message) {
     let data = { 
         "recipient": { "id": psid }, 
         "message": message, 
         "messaging_type": "MESSAGE_TAG", 
         "tag": "NON_PROMOTIONAL_SUBSCRIPTION" 
-    };
+    };        
     return axios({
         method: 'POST',
-        url: `${SEND_API}`,
+        url: SEND_API,
         params: { access_token: PAGE_ACCESS_TOKEN },
         data: data
     }).catch((error) => {
@@ -28,7 +32,7 @@ function callSendAPI(psid, message) {
             console.log(error.response.status);
             console.log(error.response.headers);
         } else if (error.request) {
-            console.log(error.request);
+            console.log(error.request);            
         } else {
             console.log('Error: ', error.message);
         }
@@ -47,9 +51,12 @@ function getDtsUpdatedCategories(processingDates) {
     return categories;
 }
 
-function getCurrentProcessingDate(processingDates, category) {
+function getCurrentProcessingDateByTitle(processingDates, category) {
+    let processingDate = [];
     let title = dbei.categories[category];
-    return processingDates[title];
+    let date = processingDates[title];
+    processingDate[title] = date
+    return processingDate;
 }
 
 function generateNotificationFile(psids, category, processingDate, response) {
@@ -71,23 +78,11 @@ function generateNotificationFile(psids, category, processingDate, response) {
     });
 }
 
-function updateCategoryDateInDB(category, curProcessingDate, resolve, reject) {
-    try {
-        db.get(constants.CURRENT_PROCESSING_DATES)
-        .find( { category: category } )
-        .assign( { date: curProcessingDate } )
-        .write();
-        resolve('Notification successfully processed for category: ' + category);
-    } catch (err) {
-        console.log(err);
-        reject(constants.ERR_NOTIF_101);
-    }
-}
-
 function processNotifications() {
     return new Promise((resolve, reject) => {
         fs.readdir(path.join(notificationDir), (err, files) => {
             if(err) return reject(constants.ERR_NOTIF_102);   
+            _.remove(files, (file) => { return file === '.gitkeep' });
             resolve(files);
         });
     })
@@ -110,37 +105,43 @@ function processNotifications() {
         return Promise.all(notifications);
     })
     .then((notifications) => {
-        console.log(notifications);
         let actions = notifications.map((notification) => {
-            let msgs = notification.psids.map((psid) => {
-                callSendAPI(psid, data.response);
+            let data = JSON.parse(notification);            
+            let msgs = data.psids.map((psid) => {
+                callSendAPI(psid, JSON.parse(data.response));
             });
             return Promise.all(msgs);
         });
-        Promise.all(actions);
+        return Promise.all(actions);
     })
     .then((responses) => {
-        console.log(responses);
         return new Promise((resolve, reject) => {
-            fs.unlink(path.join(notificationDir, file), (err) => {
-                if(err) {
-                    console.log(err);
-                    return reject(constants.ERR_NOTIF_103);   
-                }
-                resolve();
+            fs.readdir(path.join(notificationDir), (err, files) => {
+                if(err) return reject(constants.ERR_NOTIF_102);   
+                let removeActions = files.map((file) => {
+                    return new Promise((resolve, reject) => {
+                        fs.unlink(path.join(notificationDir, file), (err) => {
+                            if(err) return reject(constants.ERR_NOTIF_103);   
+                            resolve();
+                        });
+                    });
+                });      
+                return Promise.all(removeActions);          
             });
+            resolve();
         });
     })
-    .then(() => {
-        return new Promise((resolve, reject) => {
-            updateCategoryDateInDB(data.category, data.processingDate, resolve, reject);
-        });
+    .catch((err) => {
+        console.log(err);        
+        if(err === constants.ERR_NOTIF_103)  {
+            process.exit(1);
+        }
     });
 }
 
 module.exports = {
     getDtsUpdatedCategories: getDtsUpdatedCategories,
-    getCurrentProcessingDate: getCurrentProcessingDate,
+    getCurrentProcessingDate: getCurrentProcessingDateByTitle,
     generateNotificationFile: generateNotificationFile,
     processNotifications: processNotifications
 }

@@ -1,4 +1,7 @@
 const _ = require('lodash');
+const os = require('os');
+const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 const schedule = require('node-schedule');
 const constants  = require('./constants');
@@ -7,7 +10,8 @@ const subscription = require('./subscription');
 const notification = require('./notification');
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
-const SEND_API = 'https://graph.facebook.com/v2.6/me/messages';
+const SEND_API = process.env.SEND_API;
+const projectDir = path.join(__dirname, '..', '..');
 
 function callSendAPI(psid, message) {
     let data = { 
@@ -32,9 +36,9 @@ function callSendAPI(psid, message) {
     });
 }
 
-function getCurrentProcessingDatesTemplate(processingDates) {
+function getCurrentProcessingDatesByTitleTemplate(processingDateByTitle) {
     let elements = [];
-    _.forEach(processingDates, (date, title) => {
+    _.forEach(processingDateByTitle, (date, title) => {
         elements.push( { 'title': title, 'subtitle': date } );
     });
     let response = {
@@ -76,6 +80,27 @@ function getSubscriptionOptionsTemplate(sender_psid) {
     return response;
 }
 
+function refreshDataStore() {
+    dbei.scrapeData()
+    .then((processingDates) => {
+        let fileStream = fs.createWriteStream(path.join(projectDir, 'data.json'));
+        let elements = [];
+        _.forEach(processingDates, (date, title) => {
+            elements.push( { category: _.findKey(dbei.categories, (val, key) => { return val === title }), date: date } );
+        });
+        fileStream.write(JSON.stringify({ currentProcessingDates: elements }, null, 4) + os.EOL);
+        fileStream.on('error', (err) => {
+            console.log(err);
+            process.exit(1);
+        });
+        fileStream.end();
+    })
+    .catch((err) => {
+        console.log(err);
+        process.exit(1);
+    });
+}
+
 schedule.scheduleJob('*/30 9-17 * * *', function() {
     dbei.scrapeData()
         .then((processingDates) => {
@@ -83,8 +108,8 @@ schedule.scheduleJob('*/30 9-17 * * *', function() {
                 let dtsUpdatedCategories = notification.getDtsUpdatedCategories(processingDates);
                 _.forEach(dtsUpdatedCategories, (category) => {
                     let psids = subscription.getSubscribers(category);
-                    let processingDate = notification.getCurrentProcessingDate(processingDates, category); 
-                    let response = getCurrentProcessingDatesTemplate([processingDate]);
+                    let processingDate = notification.getCurrentProcessingDateByTitle(processingDates, category); 
+                    let response = getCurrentProcessingDatesByTitleTemplate(processingDate);
                     notification.generateNotificationFile(psids, category, processingDate, response);
                 });
             }
@@ -95,10 +120,8 @@ schedule.scheduleJob('*/30 9-17 * * *', function() {
 
 schedule.scheduleJob('*/45 9-17 * * *', function() {
     notification.processNotifications()
-    .catch((err) => {
-      if(err === constants.ERR_NOTIF_101 || err === constants.ERR_NOTIF_103)  {
-          process.exit(1);
-      }
+    .then(() => {
+        refreshDataStore();
     });
 });
 
@@ -115,7 +138,7 @@ module.exports = {
                 .then((processingDates) => {
                     if(_.keys(processingDates).length === 4) {
                         let psids = [sender_psid];
-                        response = getCurrentProcessingDatesTemplate(processingDates);
+                        response = getCurrentProcessingDatesByTitleTemplate(processingDates);
                         _.forEach(psids, (psid) => {
                             callSendAPI(psid, { text: constants.GREETING });
                             callSendAPI(psid, response);
@@ -128,5 +151,6 @@ module.exports = {
                     callSendAPI(sender_psid, { text: err });
                 });
         }
-    }
+    },
+    refreshDataStore: refreshDataStore
 }
