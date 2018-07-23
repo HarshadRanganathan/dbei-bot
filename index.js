@@ -8,6 +8,9 @@ const
     bodyParser = require('body-parser'),
     app = express().use(bodyParser.json());
 
+/**
+ * Webhook challenge endpoint
+ */
 app.get('/webhook', (req, res) => {
     let VERIFY_TOKEN = process.env.VERIFY_TOKEN;
     let mode = req.query['hub.mode'];
@@ -22,13 +25,25 @@ app.get('/webhook', (req, res) => {
     }
 });
 
+/**
+ * Subscription endpoint
+ */
 app.get('/subscription', (req, res) => {
     let psid = req.query['psid'];
     let category = req.query['category'];
-    let response = subscription.addSubscription(psid, category);
-    res.status(200).send(response);
+    if(psid && category) {
+        if(psid.length > 0 && category.length > 0) {
+            let response = subscription.addSubscription(psid, category);
+            res.status(200).send(response);
+        } else {
+            res.sendStatus(404);
+        }
+    }    
 });
 
+/**
+ * Messenger webhook endpoint
+ */
 app.post('/webhook', (req, res) => {
     let body = req.body;
     if(body.object === 'page') {
@@ -44,5 +59,5 @@ app.post('/webhook', (req, res) => {
 });
 
 app.listen(process.env.PORT || 1337, () => {
-    messenger.refreshDataStore();
+    //messenger.refreshDataStore(); // TODO: needs to be handled in a better way
 });

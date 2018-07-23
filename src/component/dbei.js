@@ -1,9 +1,11 @@
 const _ = require('lodash');
+const os = require('os');
+const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const constants = require('./constants');
 
-const DBEI_URL = 'https://dbei.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Current-Application-Processing-Dates/';
 const categories = {
     'EPTP': 'Employment Permit - Trusted Partner',
     'EPS': 'Employment Permit - Standard',
@@ -17,34 +19,65 @@ const selectors = {
     'Support Letters - Stamp 4': 'table:contains("Requests for Support Letters for a Stamp 4") tr:contains("Requests received") td:nth-of-type(2)'
 };
 
+const projectDir = path.join(__dirname, '..', '..');
+
+const DBEI_URL = process.env.DBEI_URL;
+
+/**
+ * Scrapes current processing dates from DBEI site
+ * @returns Map of processing dates for each selector
+ */
 function scrapeData() {
-    return new Promise(function(resolve, reject) {
-        let processingDtsByTitle = {};
-        axios.get(`${DBEI_URL}`)
-            .then((response) => {
-                let html = response.data;
-                let $ = cheerio.load(html);
-                _.forEach(selectors, (selector, title) => {
-                    processingDtsByTitle[title] = $(selector).text();
-                });
-                resolve(processingDtsByTitle);
-            })
-            .catch((error) => {
-                if (error.response) {
-                    console.log(error.response.data);
-                    console.log(error.response.status);
-                    console.log(error.response.headers);
-                } else if (error.request) {
-                    console.log(error.request);
-                } else {
-                    console.log('Error: ', error.message);
-                }
-                reject(constants.SCRAPING_ERROR);
-            });
+    let processingDtsByTitle = {};
+    return axios.get(`${DBEI_URL}`)
+    .then((response) => {
+        let html = response.data;
+        let $ = cheerio.load(html);
+        _.forEach(selectors, (selector, title) => {
+            processingDtsByTitle[title] = $(selector).text();
+        });
+        return processingDtsByTitle;
+    })
+    .catch((error) => {
+        if (error.response) {
+            console.log(error.response.status);
+            console.log(error.response.data);
+        } else if (error.request) {
+            console.log(error.request);
+        } else {
+            console.log('Error: ', error.message);
+        }
+        throw new Error(constants.ERR_SCR_100);
+    });
+}
+
+/**
+ * Refreshes the data store
+ */
+function refreshDataStore() {
+    scrapeData()
+    .then((processingDates) => {
+        let fileStream = fs.createWriteStream(path.join(projectDir, 'data.json'));
+        let elements = [];
+        _.forEach(processingDates, (date, title) => {
+            elements.push( { category: _.findKey(categories, (val, key) => { return val === title }), date: date } );
+        });
+        fileStream.write(JSON.stringify({ currentProcessingDates: elements }, null, 4) + os.EOL);
+        fileStream.on('error', (err) => {
+            console.log(err);
+            process.exit(1);
+        });
+        fileStream.end();
+        console.log('Data store refreshed');
+    })
+    .catch((err) => {
+        console.log(err);
+        process.exit(1);
     });
 }
 
 module.exports = {
     scrapeData: scrapeData,
+    refreshDataStore: refreshDataStore,
     categories: categories
 }

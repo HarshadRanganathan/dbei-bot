@@ -7,6 +7,11 @@ const db = low(adapter);
 
 db.defaults( { subscriptions: [] } ).write();
 
+/**
+ * Checks if the user is already subscribed to receive notifications for the category
+ * @param {string} psid 
+ * @param {string} category 
+ */
 function subscriberExists(psid, category) {
     let found = false;
     const doc = db.get(constants.SUBSCRIPTIONS)
@@ -16,19 +21,25 @@ function subscriberExists(psid, category) {
     return found;
 }
 
+/**
+ * Add new category subscription
+ * @param {string} psid 
+ * @param {string} category 
+ * @returns subscription message
+ */
 function addSubscription(psid, category) {
     try {
-        if(!subscriberExists(psid, category)) {
+        if(!subscriberExists(psid, category)) { // TODO: check if category is valid
             db.get(constants.SUBSCRIPTIONS)
             .push( { psid: psid, category: category, startDate: new Date(Date.now()) } )
             .write();
             return constants.SUBSCRIPTION_SUCCESS;
         } else {
-            return constants.SUBSCRIBER_EXISTS;
+            return constants.ERR_SUB_100;
         }
     } catch(err) {
         console.log(err);
-        return constants.SUBSCRIPTION_FAILED;
+        return constants.ERR_SUB_101;
     }
 }
 
@@ -48,6 +59,10 @@ function removeSubscription(sender_psid) {
     }
 }
 
+/**
+ * Get all subscribers for a category
+ * @param {string} category 
+ */
 function getSubscribers(category) {
     try {
         const docs = db.get(constants.SUBSCRIPTIONS)

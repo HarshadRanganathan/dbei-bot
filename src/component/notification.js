@@ -9,11 +9,17 @@ const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 const adapter = new FileSync('data.json');
 const db = low(adapter);
+
 const notificationDir = path.join(__dirname, '..', '..', 'notifications');
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const SEND_API = process.env.SEND_API;
 
+/**
+ * Calls the Messenger API to send the subscription message
+ * @param {string} psid page scoped id
+ * @param {object} message template
+ */
 function callSendAPI(psid, message) {
     let data = { 
         "recipient": { "id": psid }, 
@@ -28,9 +34,8 @@ function callSendAPI(psid, message) {
         data: data
     }).catch((error) => {
         if (error.response) {
-            console.log(error.response.data);
             console.log(error.response.status);
-            console.log(error.response.headers);
+            console.log(error.response.data);
         } else if (error.request) {
             console.log(error.request);            
         } else {
@@ -39,7 +44,11 @@ function callSendAPI(psid, message) {
     });
 }
 
-function getDtsUpdatedCategories(processingDates) {
+/**
+ * Returns categories whose dates have been updated in DBEI site
+ * @param {object} processingDates 
+ */
+function getUpdatedCategories(processingDates) {
     let categories = [];
     _.forEach(processingDates, (curDate, title) => {
         let category = _.findKey(dbei.categories, (val, key) => { return val === title });
@@ -51,14 +60,18 @@ function getDtsUpdatedCategories(processingDates) {
     return categories;
 }
 
-function getCurrentProcessingDtByTitle(processingDtsByTitle, category) {
-    let processingDtByTitle = {};
-    let title = dbei.categories[category];
-    let date = processingDtsByTitle[title];
-    processingDtByTitle[title] = date
-    return processingDtByTitle;
-}
-
+/**
+ * Generates file for the given category under notifications directory
+ * Content of the file will be as follows:
+ * 1. psids - list of subscribers to whom the message needs to be broadcasted
+ * 2. category - subscription category
+ * 3. processingDate - current processing date
+ * 4. response - template message
+ * @param {string} psids 
+ * @param {string} category 
+ * @param {string} processingDate 
+ * @param {object} response 
+ */
 function generateNotificationFile(psids, category, processingDate, response) {
     return new Promise((resolve, reject) => {
         let fileStream = fs.createWriteStream(path.join(notificationDir, category));
@@ -77,6 +90,14 @@ function generateNotificationFile(psids, category, processingDate, response) {
     });
 }
 
+/**
+ * Push notifications to subscribers
+ * Actions:
+ * 1. Read all notification files
+ * 2. Publish notifications to subscribers
+ * 3. Delete all notification files
+ * 4. Refresh data store
+ */
 function processNotifications() {
     return new Promise((resolve, reject) => {
         fs.readdir(path.join(notificationDir), (err, files) => {
@@ -113,22 +134,29 @@ function processNotifications() {
         });
         return Promise.all(actions);
     })
-    .then((responses) => {
+    .then(() => {
         return new Promise((resolve, reject) => {
             fs.readdir(path.join(notificationDir), (err, files) => {
                 if(err) return reject(constants.ERR_NOTIF_102);   
-                let removeActions = files.map((file) => {
-                    return new Promise((resolve, reject) => {
-                        fs.unlink(path.join(notificationDir, file), (err) => {
-                            if(err) return reject(constants.ERR_NOTIF_103);   
-                            resolve();
-                        });
-                    });
-                });      
-                return Promise.all(removeActions);          
+                resolve(files);
             });
-            resolve();
         });
+    })
+    .then((files) => {
+        let removeActions = files.map((file) => {
+            return new Promise((resolve, reject) => {
+                fs.unlink(path.join(notificationDir, file), (err) => {
+                    if(err) return reject(constants.ERR_NOTIF_103);   
+                    resolve(constants.NOTIFICATION_FILE_REMOVED);
+                });
+            });
+        });      
+        return Promise.all(removeActions); 
+    })
+    .then((status) => {
+        if(status.length > 0) {
+            dbei.refreshDataStore();
+        } 
     })
     .catch((err) => {
         console.log(err);        
@@ -139,8 +167,7 @@ function processNotifications() {
 }
 
 module.exports = {
-    getDtsUpdatedCategories: getDtsUpdatedCategories,
-    getCurrentProcessingDtByTitle: getCurrentProcessingDtByTitle,
+    getUpdatedCategories: getUpdatedCategories,
     generateNotificationFile: generateNotificationFile,
     processNotifications: processNotifications
 }
