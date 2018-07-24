@@ -16,16 +16,18 @@ const SEND_API = process.env.SEND_API;
  * @param {object} message template
  */
 function callSendAPI(psid, message) {
-    let data = { 
-        "recipient": { "id": psid }, 
-        "message": message 
-    };
-    return axios({
-        method: 'POST',
-        url: SEND_API,
-        params: { access_token: PAGE_ACCESS_TOKEN },
-        data: data
-    }).catch((error) => {
+    try {
+        let data = { 
+            "recipient": { "id": psid }, 
+            "message": message 
+        };
+        axios({
+            method: 'POST',
+            url: SEND_API,
+            params: { access_token: PAGE_ACCESS_TOKEN },
+            data: data
+        });
+    } catch(error) {
         if (error.response) {
             console.log(error.response.status);
             console.log(error.response.data);
@@ -34,7 +36,7 @@ function callSendAPI(psid, message) {
         } else {
             console.log('Error: ', error.message);
         }
-    });
+    }
 }
 
 /**
@@ -82,7 +84,7 @@ function subscriptionOptions(sender_psid) {
 /**
  * Scheduler for generating notification files
  */
-schedule.scheduleJob('*/30 * * * *', function() {
+schedule.scheduleJob('*/3 * * * *', function() {
     dbei.scrapeData()
         .then((processingDates) => {
             let updatedCategories = notification.getUpdatedCategories(processingDates);
@@ -109,7 +111,7 @@ schedule.scheduleJob('*/30 * * * *', function() {
 /**
  * Scheduler for pushing notifications
  */
-schedule.scheduleJob('*/35 * * * *', function() {
+schedule.scheduleJob('*/5 * * * *', function() {
     notification.processNotifications();
 });
 

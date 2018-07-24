@@ -21,18 +21,20 @@ const SEND_API = process.env.SEND_API;
  * @param {object} message template
  */
 function callSendAPI(psid, message) {
-    let data = { 
-        "recipient": { "id": psid }, 
-        "message": message, 
-        "messaging_type": "MESSAGE_TAG", 
-        "tag": "NON_PROMOTIONAL_SUBSCRIPTION" 
-    };        
-    return axios({
-        method: 'POST',
-        url: SEND_API,
-        params: { access_token: PAGE_ACCESS_TOKEN },
-        data: data
-    }).catch((error) => {
+    try {
+        let data = { 
+            "recipient": { "id": psid }, 
+            "message": message, 
+            "messaging_type": "MESSAGE_TAG", 
+            "tag": "NON_PROMOTIONAL_SUBSCRIPTION" 
+        }; 
+        axios({
+            method: 'POST',
+            url: SEND_API,
+            params: { access_token: PAGE_ACCESS_TOKEN },
+            data: data
+        });
+    } catch(error) {
         if (error.response) {
             console.log(error.response.status);
             console.log(error.response.data);
@@ -41,7 +43,7 @@ function callSendAPI(psid, message) {
         } else {
             console.log('Error: ', error.message);
         }
-    });
+    }
 }
 
 /**
@@ -91,6 +93,52 @@ function generateNotificationFile(psids, category, processingDate, response) {
 }
 
 /**
+ * Lists the files in the notification directory
+ */
+function listNotificationFiles() {
+    return new Promise((resolve, reject) => {
+        fs.readdir(path.join(notificationDir), (err, files) => {
+            if(err) reject(constants.ERR_NOTIF_102);   
+            _.remove(files, (file) => { return file === '.gitkeep' });
+            resolve(files);
+        });
+    });
+}
+
+/**
+ * Reads the notification file contents
+ * @param {string} file 
+ */
+function readNotificationFile(file) {
+    return new Promise((resolve, reject) => {
+        let data = '';
+        let readStream = fs.createReadStream(path.join(notificationDir, file));
+        readStream.on('data', (chunk) => {
+            data += chunk;
+        })
+        .on('end', () => {
+            resolve(data);
+        })
+        .on('error', (err) => {
+            return reject(err);
+        });
+    });
+}
+
+/**
+ * Deletes the notification file
+ * @param {string} file 
+ */
+function removeNotificationFile(file) {
+    return new Promise((resolve, reject) => {
+        fs.unlink(path.join(notificationDir, file), (err) => {
+            if(err) return reject(constants.ERR_NOTIF_103);   
+            resolve(constants.NOTIFICATION_FILE_REMOVED);
+        });
+    });
+}
+
+/**
  * Push notifications to subscribers
  * Actions:
  * 1. Read all notification files
@@ -98,72 +146,25 @@ function generateNotificationFile(psids, category, processingDate, response) {
  * 3. Delete all notification files
  * 4. Refresh data store
  */
-function processNotifications() {
-    return new Promise((resolve, reject) => {
-        fs.readdir(path.join(notificationDir), (err, files) => {
-            if(err) return reject(constants.ERR_NOTIF_102);   
-            _.remove(files, (file) => { return file === '.gitkeep' });
-            resolve(files);
+async function processNotifications() {
+    try {
+        let files = await listNotificationFiles();
+        let readFilePromises = files.map(readNotificationFile);
+        let notifications = await Promise.all(readFilePromises);
+        _.forEach(notifications, async (notification) => {
+            let data = JSON.parse(notification);
+            let msgPromises = data.psids.map((psid) => { callSendAPI(psid, JSON.parse(data.response)); });
+            await Promise.all(msgPromises);
         });
-    })
-    .then((files) => {
-        let notifications = files.map((file) => {
-            return new Promise((resolve, reject) => {
-                let data = '';
-                let readStream = fs.createReadStream(path.join(notificationDir, file));
-                readStream.on('data', (chunk) => {
-                    data += chunk;
-                })
-                .on('end', () => {
-                    resolve(data);
-                })
-                .on('error', (err) => {
-                    return reject(err);
-                });
-            });
-        });
-        return Promise.all(notifications);
-    })
-    .then((notifications) => {
-        let actions = notifications.map((notification) => {
-            let data = JSON.parse(notification);            
-            let msgs = data.psids.map((psid) => {
-                callSendAPI(psid, JSON.parse(data.response));
-            });
-            return Promise.all(msgs);
-        });
-        return Promise.all(actions);
-    })
-    .then(() => {
-        return new Promise((resolve, reject) => {
-            fs.readdir(path.join(notificationDir), (err, files) => {
-                if(err) return reject(constants.ERR_NOTIF_102);   
-                resolve(files);
-            });
-        });
-    })
-    .then((files) => {
-        let removeActions = files.map((file) => {
-            return new Promise((resolve, reject) => {
-                fs.unlink(path.join(notificationDir, file), (err) => {
-                    if(err) return reject(constants.ERR_NOTIF_103);   
-                    resolve(constants.NOTIFICATION_FILE_REMOVED);
-                });
-            });
-        });      
-        return Promise.all(removeActions); 
-    })
-    .then((status) => {
-        if(status.length > 0) {
-            dbei.refreshDataStore();
-        } 
-    })
-    .catch((err) => {
+        let removeFilePromises = files.map(removeNotificationFile);
+        await Promise.all(removeFilePromises);
+        if(files.length > 0) dbei.refreshDataStore();
+    } catch(err) {
         console.log(err);        
         if(constants.ERR_NOTIF_103 === err)  {
             process.exit(1);
         }
-    });
+    }
 }
 
 module.exports = {

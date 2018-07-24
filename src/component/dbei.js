@@ -57,8 +57,8 @@ async function scrapeData() {
 function refreshDataStore() {
     scrapeData()
     .then((processingDates) => {
-        let fileStream = fs.createWriteStream(path.join(projectDir, 'data.json'));
         let elements = [];
+        let fileStream = fs.createWriteStream(path.join(projectDir, 'data.json'));
         _.forEach(processingDates, (date, title) => {
             elements.push( { category: _.findKey(categories, (val, key) => { return val === title }), date: date } );
         });
