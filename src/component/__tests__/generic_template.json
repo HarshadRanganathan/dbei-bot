@@ -1,0 +1,14 @@
+{
+    "attachment": {
+        "type": "template",
+        "payload": {
+            "template_type": "generic",
+            "elements": [
+                {
+                    "title": "Support Letters - Stamp 4",
+                    "subtitle": "11 June 2018"
+                }
+            ]
+        }
+    }
+}

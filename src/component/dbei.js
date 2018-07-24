@@ -25,20 +25,20 @@ const DBEI_URL = process.env.DBEI_URL;
 
 /**
  * Scrapes current processing dates from DBEI site
- * @returns Map of processing dates for each selector
+ * @returns {object} processing dates for each selector
+ * @throws Error
  */
-function scrapeData() {
+async function scrapeData() {
     let processingDtsByTitle = {};
-    return axios.get(`${DBEI_URL}`)
-    .then((response) => {
-        let html = response.data;
+    try {
+        let response = await axios.get(`${DBEI_URL}`);
+        let html = response.data; 
         let $ = cheerio.load(html);
         _.forEach(selectors, (selector, title) => {
             processingDtsByTitle[title] = $(selector).text();
-        });
+        });        
         return processingDtsByTitle;
-    })
-    .catch((error) => {
+    } catch(error) {
         if (error.response) {
             console.log(error.response.status);
             console.log(error.response.data);
@@ -48,7 +48,7 @@ function scrapeData() {
             console.log('Error: ', error.message);
         }
         throw new Error(constants.ERR_SCR_100);
-    });
+    }
 }
 
 /**

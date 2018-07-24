@@ -1,0 +1,19 @@
+{
+    "attachment": {
+        "type": "template",
+        "payload": {
+            "template_type": "list",
+            "top_element_style": "compact",
+            "elements": [
+                {
+                    "title": "Support Letters - Stamp 4",
+                    "subtitle": "11 June 2018"
+                },
+                {
+                    "title": "Employment Permit - Standard",
+                    "subtitle": "10 April 2018"
+                }
+            ]
+        }
+    }
+}

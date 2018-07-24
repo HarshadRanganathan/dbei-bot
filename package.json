@@ -4,7 +4,10 @@
   "description": "Bot to track DBEI (Department of Business, Enterprise & Innovation) processing dates for employment permits and support letter",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "npm test -- --watch",
+    "express-server:prod": "node index.js",
+    "start": "npm run express-server:prod"
   },
   "repository": {
     "type": "git",
@@ -28,5 +31,9 @@
     "lodash": "^4.17.10",
     "lowdb": "^1.0.0",
     "node-schedule": "^1.3.0"
+  },
+  "devDependencies": {
+    "jest": "^23.4.1",
+    "moxios": "^0.4.0"
   }
 }
