@@ -58,7 +58,7 @@ function refreshDataStore() {
     scrapeData()
     .then((processingDates) => {
         let elements = [];
-        let fileStream = fs.createWriteStream(path.join(projectDir, 'data.json'));
+        let fileStream = fs.createWriteStream(path.join(projectDir, constants.DATA_STORE));
         _.forEach(processingDates, (date, title) => {
             elements.push( { category: _.findKey(categories, (val, key) => { return val === title }), date: date } );
         });
@@ -68,7 +68,6 @@ function refreshDataStore() {
             process.exit(1);
         });
         fileStream.end();
-        console.log('Data store refreshed');
     })
     .catch((err) => {
         console.log(err);

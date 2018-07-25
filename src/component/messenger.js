@@ -1,11 +1,9 @@
 const _ = require('lodash');
 const axios = require('axios');
-const schedule = require('node-schedule');
 const constants  = require('./constants');
 const templates = require('./templates');
 const dbei =  require('./dbei');
 const subscription = require('./subscription');
-const notification = require('./notification');
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const SEND_API = process.env.SEND_API;
@@ -82,40 +80,6 @@ function subscriptionOptions(sender_psid) {
 }
 
 /**
- * Scheduler for generating notification files
- */
-schedule.scheduleJob('*/3 * * * *', function() {
-    dbei.scrapeData()
-        .then((processingDates) => {
-            let updatedCategories = notification.getUpdatedCategories(processingDates);
-            _.forEach(updatedCategories, (category) => {
-                let psids = subscription.getSubscribers(category);
-                let title = dbei.categories[category];
-                let processingDate = processingDates[title];
-                let processingDtsByTitle = {};
-                processingDtsByTitle[title] = processingDate;
-                let response = currentProcessingDtsMessage(processingDtsByTitle);
-                notification.generateNotificationFile(psids, category, processingDate, response)
-                .then((response) => {
-                    console.log(response);  
-                })
-                .catch((err) => {
-                    console.log(err);                        
-                });
-            });
-        }).catch((err) => {
-            console.log(err);
-        });
-});
-
-/**
- * Scheduler for pushing notifications
- */
-schedule.scheduleJob('*/5 * * * *', function() {
-    notification.processNotifications();
-});
-
-/**
  * Incoming Message Handler
  * @param {string} sender_psid 
  * @param {object} received_message 
@@ -141,5 +105,6 @@ function handleMessage(sender_psid, received_message) {
 }
 
 module.exports = {
-    handleMessage: handleMessage
+    handleMessage: handleMessage,
+    currentProcessingDtsMessage: currentProcessingDtsMessage
 }

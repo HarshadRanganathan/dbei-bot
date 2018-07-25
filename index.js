@@ -1,12 +1,27 @@
 'use strict';
 
 require('dotenv').config();
+const CronJob = require('cron').CronJob;
 const messenger = require('./src/component/messenger');
+const notification = require('./src/component/notification');
 const subscription = require('./src/component/subscription');
 const 
     express = require('express'),
     bodyParser = require('body-parser'),
     app = express().use(bodyParser.json());
+
+/**
+ * Scheduler for generating notifications
+ */
+let notificationsGenerator = new CronJob('*/3 * * * *', notification.generateNotifications, null, true, 'Europe/Dublin');
+console.log('Notification Generator Running: ' + notificationsGenerator.running);
+
+
+/**
+ * Scheduler for publishing notifications
+ */
+let notificationsPublisher = new CronJob('*/5 * * * *', notification.publishNotifications, null, true, 'Europe/Dublin');
+console.log('Notification Publisher Running: ' + notificationsPublisher.running);
 
 /**
  * Webhook challenge endpoint

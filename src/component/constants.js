@@ -1,4 +1,6 @@
 module.exports = Object.freeze({
+    DATA_STORE: 'data.json',
+    SUBSCRIPTION_STORE: 'subscription.json',
     CURRENT_PROCESSING_DATES: 'currentProcessingDates',
     GREETING: 'Hey there! Current processing dates',
     RESPONSE: 'Response',
