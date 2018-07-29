@@ -52,6 +52,27 @@ app.get('/subscription', (req, res) => {
         let response = subscription.addSubscription(psid, category);
         if(response == constants.SUBSCRIPTION_SUCCESS) {
             res.status(200).sendFile(path.join(__dirname + '/public/subscription_success.html'));
+        } else if(response == constants.ERR_SUB_100) {
+            res.status(400).sendFile(path.join(__dirname + '/public/subscription_error.html'));
+        } else {
+            res.status(500).send(response);
+        }
+    } else {
+        res.sendStatus(404);
+    }
+});
+
+app.get('/unsubscribe', (req, res) => {
+    let psid = req.query['psid'];
+    let category = req.query['category'];
+    if(psid && category) {
+        let response = subscription.removeSubscription(psid, category);
+        if(response == constants.UNSUBSCRIBE_SUCCESS) {
+            res.status(200).sendFile(path.join(__dirname + '/public/unsubscribe_success.html'));
+        } else if(response == constants.ERR_UNSUB_100) {
+            res.status(400).sendFile(path.join(__dirname + '/public/unsubscribe_error.html'));
+        } else {
+            res.status(500).send(response);
         }
     } else {
         res.sendStatus(404);

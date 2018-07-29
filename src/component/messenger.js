@@ -5,13 +5,14 @@ const templates = require('./templates');
 const dbei =  require('./dbei');
 const subscription = require('./subscription');
 
-const SUBSCRIPTION_KEYWORDS = ['subscribe', 'subscription'];
 const DBEI_KEYWORDS = ['current', 'processing', 'dates', 'current dates', 'processing dates', 'current processing dates',
 'stamp 4', 'support letter', 'stamp 4 support letter', 'stamp 4 dates', 'support letter dates', 'stamp 4 support letter dates', 'stamp 4 support letter prcessing dates',
 'employment permit trusted partner', 'employment permit dates', 'employment permit processing dates', 'trusted partner dates',
 'emloyment permit standard', 'emloyment permit standard dates', 'emloyment permit standard processing dates',
 'reviews', 'trusted partner', 'review dates', 'review processing dates', 'trusted partner dates'];
 const QUICK_REPLY_OPTIONS = ['Dates', 'Subscribe', 'Unsubscribe'];
+const SUBSCRIPTION_KEYWORDS = ['subscribe', 'subscription'];
+const UNSUBSCRIBE_KEYWORDS = ['unsubscribe'];
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const SEND_API = process.env.SEND_API;
@@ -87,6 +88,35 @@ function subscriptionOptions(sender_psid) {
 }
 
 /**
+ * Returns the options to unsubscribe from notifications
+ * @param {string} sender_psid 
+ */
+function unsubscribeOptions(sender_psid) {
+    let elements = [];
+    let subscriptions = subscription.getSubscriptions(sender_psid);
+    if(subscriptions.length > 0) {
+        _.forEach(subscriptions, (category) => {
+            let option = { 
+                'title': dbei.categories[category], 
+                buttons: [ 
+                    { 
+                        "title": "Unsubscribe", 
+                        "type": "web_url", 
+                        "url": `https://dbei-bot.rharshad.com/unsubscribe?psid=${sender_psid}&category=${category}`, 
+                        "messenger_extensions": true, 
+                        "webview_height_ratio": "compact" 
+                    } 
+                ] 
+            }; 
+            elements.push(option);
+        });
+        return templates.listTemplate(elements);
+    } else {
+        return { text: constants.ERR_UNSUB_100 };
+    }
+}
+
+/**
  * Returns quick reply options
  * @param {text} text 
  */
@@ -119,6 +149,8 @@ function handleMessage(sender_psid, received_message) {
     }
     else if(SUBSCRIPTION_KEYWORDS.includes(received_message.text.toLowerCase())) {
         callSendAPI(sender_psid, subscriptionOptions(sender_psid));
+    } else if(UNSUBSCRIBE_KEYWORDS.includes(received_message.text.toLowerCase())) {
+        callSendAPI(sender_psid, unsubscribeOptions(sender_psid));
     } else {
         callSendAPI(sender_psid, quickReplyOptions(constants.WELCOME_MSG));
     }
