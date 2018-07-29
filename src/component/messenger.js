@@ -5,6 +5,14 @@ const templates = require('./templates');
 const dbei =  require('./dbei');
 const subscription = require('./subscription');
 
+const SUBSCRIPTION_KEYWORDS = ['subscribe', 'subscription'];
+const DBEI_KEYWORDS = ['current', 'processing', 'dates', 'current dates', 'processing dates', 'current processing dates',
+'stamp 4', 'support letter', 'stamp 4 support letter', 'stamp 4 dates', 'support letter dates', 'stamp 4 support letter dates', 'stamp 4 support letter prcessing dates',
+'employment permit trusted partner', 'employment permit dates', 'employment permit processing dates', 'trusted partner dates',
+'emloyment permit standard', 'emloyment permit standard dates', 'emloyment permit standard processing dates',
+'reviews', 'trusted partner', 'review dates', 'review processing dates', 'trusted partner dates'];
+const QUICK_REPLY_OPTIONS = ['Dates', 'Subscribe', 'Unsubscribe'];
+
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const SEND_API = process.env.SEND_API;
 
@@ -80,27 +88,40 @@ function subscriptionOptions(sender_psid) {
 }
 
 /**
+ * Returns quick reply options
+ * @param {text} text 
+ */
+function quickReplyOptions(text) {
+    let quickReplies = [];
+    _.forEach(QUICK_REPLY_OPTIONS, (option) => {
+        quickReplies.push({ content: 'text', 'title': option, 'payload': payload });
+    });
+    return templates.quickRepliesTemplate(text, quickReplies);
+}   
+
+/**
  * Incoming Message Handler
  * @param {string} sender_psid 
  * @param {object} received_message 
  */
 function handleMessage(sender_psid, received_message) {
-    if(received_message.text.toUpperCase() == 'subscribe'.toUpperCase()) {
-        callSendAPI(sender_psid, subscriptionOptions(sender_psid));
-    } else if(received_message.text.toUpperCase() == 'unsubscribe'.toUpperCase()) {
-        callSendAPI(sender_psid, { text: subscription.removeSubscription(sender_psid) });
-    } else if(received_message.text) {
+    if(received_message.text.toLowerCase() in DBEI_KEYWORDS) {
         dbei.scrapeData()
         .then((processingDtsByTitle) => {
             let psids = [sender_psid]; // fix for message delivery order
             _.forEach(psids, (psid) => {
-                callSendAPI(psid, { text: constants.GREETING });
+                callSendAPI(psid, { text: constants.CURRENT_PROCESSING_DATES_MSG });
                 callSendAPI(psid, currentProcessingDtsMessage(processingDtsByTitle));
             });
         })
         .catch((err) => {
             callSendAPI(sender_psid, { text: err.message });
         });
+    }
+    else if(received_message.text.toLowerCase() in SUBSCRIPTION_KEYWORDS) {
+        callSendAPI(sender_psid, subscriptionOptions(sender_psid));
+    } else {
+        callSendAPI(sender_psid, quickReplyOptions(constants.WELCOME_MSG));
     }
 }
 

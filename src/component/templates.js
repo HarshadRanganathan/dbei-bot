@@ -31,7 +31,20 @@ function listTemplate(elements) {
     };
 }
 
+/**
+ * @link https://developers.facebook.com/docs/messenger-platform/send-messages/quick-replies/
+ * @param {text} text 
+ * @param {array} quickReplies 
+ */
+function quickRepliesTemplate(text, quickReplies) {
+    return {
+        "text": text,
+        "quickReplies": quickReplies
+    }
+}
+
 module.exports = {
     genericTemplate: genericTemplate,
-    listTemplate: listTemplate
+    listTemplate: listTemplate,
+    quickRepliesTemplate: quickRepliesTemplate
 };
