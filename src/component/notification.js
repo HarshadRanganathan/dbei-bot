@@ -29,7 +29,7 @@ function callSendAPI(psid, message) {
         }; 
         return axios({
             method: 'POST',
-            url: SEND_API,
+            url: `${SEND_API}`,
             params: { access_token: PAGE_ACCESS_TOKEN },
             data: data
         });

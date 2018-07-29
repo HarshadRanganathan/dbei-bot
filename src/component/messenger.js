@@ -22,18 +22,17 @@ const SEND_API = process.env.SEND_API;
  * @param {object} message template
  */
 function callSendAPI(psid, message) {
-    try {
-        let data = { 
-            "recipient": { "id": psid }, 
-            "message": message 
-        };
-        axios({
-            method: 'POST',
-            url: SEND_API,
-            params: { access_token: PAGE_ACCESS_TOKEN },
-            data: data
-        });
-    } catch(error) {
+    let data = { 
+        "recipient": { "id": psid }, 
+        "message": message 
+    };
+    axios({
+        method: 'POST',
+        url: `${SEND_API}`,
+        params: { access_token: PAGE_ACCESS_TOKEN },
+        data: data
+    })
+    .catch((error) => {
         if (error.response) {
             console.log(error.response.status);
             console.log(error.response.data);
@@ -42,7 +41,7 @@ function callSendAPI(psid, message) {
         } else {
             console.log('Error: ', error.message);
         }
-    }
+    });
 }
 
 /**
@@ -94,7 +93,7 @@ function subscriptionOptions(sender_psid) {
 function quickReplyOptions(text) {
     let quickReplies = [];
     _.forEach(QUICK_REPLY_OPTIONS, (option) => {
-        quickReplies.push({ content: 'text', 'title': option, 'payload': payload });
+        quickReplies.push({ content_type: 'text', title: option, payload: option });
     });
     return templates.quickRepliesTemplate(text, quickReplies);
 }   
@@ -105,7 +104,7 @@ function quickReplyOptions(text) {
  * @param {object} received_message 
  */
 function handleMessage(sender_psid, received_message) {
-    if(received_message.text.toLowerCase() in DBEI_KEYWORDS) {
+    if(DBEI_KEYWORDS.includes(received_message.text.toLowerCase())) {
         dbei.scrapeData()
         .then((processingDtsByTitle) => {
             let psids = [sender_psid]; // fix for message delivery order
@@ -114,11 +113,11 @@ function handleMessage(sender_psid, received_message) {
                 callSendAPI(psid, currentProcessingDtsMessage(processingDtsByTitle));
             });
         })
-        .catch((err) => {
+        .catch((err) => {         
             callSendAPI(sender_psid, { text: err.message });
         });
     }
-    else if(received_message.text.toLowerCase() in SUBSCRIPTION_KEYWORDS) {
+    else if(SUBSCRIPTION_KEYWORDS.includes(received_message.text.toLowerCase())) {
         callSendAPI(sender_psid, subscriptionOptions(sender_psid));
     } else {
         callSendAPI(sender_psid, quickReplyOptions(constants.WELCOME_MSG));

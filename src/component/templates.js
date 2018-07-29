@@ -39,7 +39,7 @@ function listTemplate(elements) {
 function quickRepliesTemplate(text, quickReplies) {
     return {
         "text": text,
-        "quickReplies": quickReplies
+        "quick_replies": quickReplies
     }
 }
 
