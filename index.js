@@ -2,7 +2,9 @@
 
 require('dotenv').config();
 const path = require('path');
+const fs = require('fs');
 const CronJob = require('cron').CronJob;
+const dbei = require('./src/component/dbei');
 const messenger = require('./src/component/messenger');
 const notification = require('./src/component/notification');
 const subscription = require('./src/component/subscription');
@@ -15,14 +17,14 @@ const
 /**
  * Scheduler for generating notifications
  */
-let notificationsGenerator = new CronJob('*/3 * * * *', notification.generateNotifications, null, true, 'Europe/Dublin');
+let notificationsGenerator = new CronJob('0 9-18 * * *', notification.generateNotifications, null, true, 'Europe/Dublin');
 console.log('Notification Generator Running: ' + notificationsGenerator.running);
 
 
 /**
  * Scheduler for publishing notifications
  */
-let notificationsPublisher = new CronJob('*/5 * * * *', notification.publishNotifications, null, true, 'Europe/Dublin');
+let notificationsPublisher = new CronJob('5 9-18 * * *', notification.publishNotifications, null, true, 'Europe/Dublin');
 console.log('Notification Publisher Running: ' + notificationsPublisher.running);
 
 /**
@@ -97,5 +99,8 @@ app.post('/webhook', (req, res) => {
 });
 
 app.listen(process.env.PORT || 1337, () => {
-    //messenger.refreshDataStore(); // TODO: needs to be handled in a better way
+    fs.readdir(__dirname, (err, files) => {
+        if(err) console.log('Unable to read files in root directory');
+        if(!files.includes(constants.DATA_STORE)) dbei.refreshDataStore();
+    });
 });

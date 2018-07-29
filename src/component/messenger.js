@@ -110,7 +110,8 @@ function unsubscribeOptions(sender_psid) {
             }; 
             elements.push(option);
         });
-        return templates.listTemplate(elements);
+        if(elements.length == 1) return templates.genericTemplate(elements);
+        else return templates.listTemplate(elements);
     } else {
         return { text: constants.ERR_UNSUB_100 };
     }
