@@ -20,20 +20,19 @@ const SEND_API = process.env.SEND_API;
  * @param {object} message template
  */
 function callSendAPI(psid, message) {
-    try {
-        let data = { 
-            "recipient": { "id": psid }, 
-            "message": message, 
-            "messaging_type": "MESSAGE_TAG", 
-            "tag": "NON_PROMOTIONAL_SUBSCRIPTION" 
-        }; 
-        return axios({
-            method: 'POST',
-            url: `${SEND_API}`,
-            params: { access_token: PAGE_ACCESS_TOKEN },
-            data: data
-        });
-    } catch(error) {
+    let data = { 
+        "recipient": { "id": psid }, 
+        "message": message, 
+        "messaging_type": "MESSAGE_TAG", 
+        "tag": "NON_PROMOTIONAL_SUBSCRIPTION" 
+    }; 
+    return axios({
+        method: 'POST',
+        url: `${SEND_API}`,
+        params: { access_token: PAGE_ACCESS_TOKEN },
+        data: data
+    })
+    .catch((error) => {
         if (error.response) {
             console.log(error.response.status);
             console.log(error.response.data);
@@ -42,7 +41,7 @@ function callSendAPI(psid, message) {
         } else {
             console.log('Error: ', error.message);
         }
-    }
+    });
 }
 
 /**
@@ -109,7 +108,7 @@ function writeNotification(psids, category, processingDate, response) {
         fileStream.write(JSON.stringify(data, null, 4) + os.EOL);
         fileStream.on('finish', () => { resolve("Notification File Created"); } )
         .on('error', (err) => {
-            reject(constants.ERR_NOTIF_100);
+            return reject(constants.ERR_NOTIF_100);
         });
         fileStream.end();
     });

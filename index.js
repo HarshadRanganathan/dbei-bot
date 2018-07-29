@@ -1,10 +1,12 @@
 'use strict';
 
 require('dotenv').config();
+const path = require('path');
 const CronJob = require('cron').CronJob;
 const messenger = require('./src/component/messenger');
 const notification = require('./src/component/notification');
 const subscription = require('./src/component/subscription');
+const constants = require('./src/component/constants');
 const 
     express = require('express'),
     bodyParser = require('body-parser'),
@@ -47,13 +49,13 @@ app.get('/subscription', (req, res) => {
     let psid = req.query['psid'];
     let category = req.query['category'];
     if(psid && category) {
-        if(psid.length > 0 && category.length > 0) {
-            let response = subscription.addSubscription(psid, category);
-            res.status(200).send(response);
-        } else {
-            res.sendStatus(404);
+        let response = subscription.addSubscription(psid, category);
+        if(response == constants.SUBSCRIPTION_SUCCESS) {
+            res.status(200).sendFile(path.join(__dirname + '/public/subscription_success.html'));
         }
-    }    
+    } else {
+        res.sendStatus(404);
+    }
 });
 
 /**
