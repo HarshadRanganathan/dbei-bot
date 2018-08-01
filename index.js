@@ -17,14 +17,14 @@ const
 /**
  * Scheduler for generating notifications
  */
-let notificationsGenerator = new CronJob('0 9-18 * * *', notification.generateNotifications, null, true, 'Europe/Dublin');
+let notificationsGenerator = new CronJob('0 9-18 * * 1-5', notification.generateNotifications, null, true, 'Europe/Dublin');
 console.log('Notification Generator Running: ' + notificationsGenerator.running);
 
 
 /**
  * Scheduler for publishing notifications
  */
-let notificationsPublisher = new CronJob('5 9-18 * * *', notification.publishNotifications, null, true, 'Europe/Dublin');
+let notificationsPublisher = new CronJob('5 9-18 * * 1-5', notification.publishNotifications, null, true, 'Europe/Dublin');
 console.log('Notification Publisher Running: ' + notificationsPublisher.running);
 
 /**

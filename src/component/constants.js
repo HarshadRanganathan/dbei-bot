@@ -4,6 +4,7 @@ module.exports = Object.freeze({
     CURRENT_PROCESSING_DATES: 'currentProcessingDates',
     CURRENT_PROCESSING_DATES_MSG: 'Current processing dates',
     WELCOME_MSG: 'Hi! How can I help you today?',
+    ERR_MSG: 'Sorry, I didn\'t understand. Choose one of the reply options below',
     RESPONSE: 'Response',
     SUBSCRIPTIONS: 'subscriptions',
     SUBSCRIPTION_SUCCESS: 'Thanks for subscribing. You will now receive notifications on current processing dates as they are updated.',

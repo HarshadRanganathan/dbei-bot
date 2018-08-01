@@ -5,6 +5,7 @@ const templates = require('./templates');
 const dbei =  require('./dbei');
 const subscription = require('./subscription');
 
+const BOT_KEYWORDS = ['hi', 'hello', 'howdy', 'get started'];
 const DBEI_KEYWORDS = ['current', 'processing', 'dates', 'current dates', 'processing dates', 'current processing dates',
 'stamp 4', 'support letter', 'stamp 4 support letter', 'stamp 4 dates', 'support letter dates', 'stamp 4 support letter dates', 'stamp 4 support letter prcessing dates',
 'employment permit trusted partner', 'employment permit dates', 'employment permit processing dates', 'trusted partner dates',
@@ -135,7 +136,9 @@ function quickReplyOptions(text) {
  * @param {object} received_message 
  */
 function handleMessage(sender_psid, received_message) {
-    if(DBEI_KEYWORDS.includes(received_message.text.toLowerCase())) {
+    if(BOT_KEYWORDS.includes(received_message.text.toLowerCase())) {
+        callSendAPI(sender_psid, quickReplyOptions(constants.WELCOME_MSG));
+    } else if(DBEI_KEYWORDS.includes(received_message.text.toLowerCase())) {
         dbei.scrapeData()
         .then((processingDtsByTitle) => {
             let psids = [sender_psid]; // fix for message delivery order
@@ -147,13 +150,12 @@ function handleMessage(sender_psid, received_message) {
         .catch((err) => {         
             callSendAPI(sender_psid, { text: err.message });
         });
-    }
-    else if(SUBSCRIPTION_KEYWORDS.includes(received_message.text.toLowerCase())) {
+    } else if(SUBSCRIPTION_KEYWORDS.includes(received_message.text.toLowerCase())) {
         callSendAPI(sender_psid, subscriptionOptions(sender_psid));
     } else if(UNSUBSCRIBE_KEYWORDS.includes(received_message.text.toLowerCase())) {
         callSendAPI(sender_psid, unsubscribeOptions(sender_psid));
     } else {
-        callSendAPI(sender_psid, quickReplyOptions(constants.WELCOME_MSG));
+        callSendAPI(sender_psid, quickReplyOptions(constants.ERR_MSG));
     }
 }
 

@@ -1,7 +1,7 @@
 # dbei-bot
 Track current application processing dates for employment permits and support letter processed by the Department of Business, Enterprise and Innovation (Ireland).
 
-Try the bot at https://m.me/dbei-bot (Yet to be approved. Messages will not get delivered)
+Try the bot at https://m.me/dbei-bot
 
 FB Page - https://fb.me/dbei-bot
 
