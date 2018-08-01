@@ -56,11 +56,11 @@ function removeSubscription(sender_psid, category) {
             .write();
             return constants.UNSUBSCRIBE_SUCCESS;
         } else {
-            return constants.SUBSCRIBER_NOT_EXISTS;
+            return constants.ERR_UNSUB_100;
         }
     } catch(err) {
         console.log(err);
-        return constants.UNSUBSCRIBE_FAILED;
+        return constants.ERR_UNSUB_101;
     }
 }
 
