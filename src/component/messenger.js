@@ -136,12 +136,12 @@ function quickReplyOptions(text) {
  * @param {string} sender_psid 
  * @param {object} received_message 
  */
-async function handleMessage(sender_psid, received_message) {
+function handleMessage(sender_psid, received_message) {
     if(WELCOME_KEYWORDS.includes(received_message.text.toLowerCase())) {
         callSendAPI(sender_psid, quickReplyOptions(constants.WELCOME_MSG));
     } else if(DBEI_KEYWORDS.includes(received_message.text.toLowerCase())) {
         dbei.scrapeData()
-        .then((processingDtsByTitle) => {
+        .then(async (processingDtsByTitle) => {
             await callSendAPI(sender_psid, { text: constants.CURRENT_PROCESSING_DATES_MSG });
             callSendAPI(sender_psid, currentProcessingDtsMessage(processingDtsByTitle));
         })
