@@ -9,7 +9,7 @@ const WELCOME_KEYWORDS = ['hi', 'hello', 'howdy', 'get started'];
 const HELP_KEYWORDS = ['help'];
 const DBEI_KEYWORDS = ['current', 'processing', 'dates', 'current dates', 'processing dates', 'current processing dates',
 'stamp 4', 'support letter', 'stamp 4 support letter', 'stamp 4 dates', 'support letter dates', 'stamp 4 support letter dates', 'stamp 4 support letter prcessing dates',
-'employment permit trusted partner', 'employment permit dates', 'employment permit processing dates', 'trusted partner dates',
+'employment permit trusted partner', 'employment permit', 'employment permit dates', 'employment permit processing dates', 'trusted partner dates',
 'emloyment permit standard', 'emloyment permit standard dates', 'emloyment permit standard processing dates',
 'reviews', 'trusted partner', 'review dates', 'review processing dates', 'trusted partner dates'];
 const QUICK_REPLY_OPTIONS = ['Dates', 'Subscribe', 'Unsubscribe'];
