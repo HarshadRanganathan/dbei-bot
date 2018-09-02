@@ -65,6 +65,21 @@ function currentProcessingDtsMessage(processingDtsByTitle) {
 }
 
 /**
+ * Sends current processing dates to the user
+ * @param {string} sender_psid
+ */
+function currentProcessingDts(sender_psid) {
+    dbei.scrapeData()
+    .then(async (processingDtsByTitle) => {
+        await callSendAPI(sender_psid, { text: constants.CURRENT_PROCESSING_DATES_MSG });
+        callSendAPI(sender_psid, currentProcessingDtsMessage(processingDtsByTitle));
+    })
+    .catch((err) => {         
+        callSendAPI(sender_psid, { text: err.message });
+    });
+}
+
+/**
  * Returns the subscription options for the psid user
  * @param {string} sender_psid 
  * @returns messenger template
@@ -137,26 +152,22 @@ function quickReplyOptions(text) {
  * @param {object} received_message 
  */
 function handleMessage(sender_psid, received_message) {
-    if(WELCOME_KEYWORDS.includes(received_message.text.toLowerCase())) {
-        callSendAPI(sender_psid, quickReplyOptions(constants.WELCOME_MSG));
-    } else if(DBEI_KEYWORDS.includes(received_message.text.toLowerCase())) {
-        dbei.scrapeData()
-        .then(async (processingDtsByTitle) => {
-            await callSendAPI(sender_psid, { text: constants.CURRENT_PROCESSING_DATES_MSG });
-            callSendAPI(sender_psid, currentProcessingDtsMessage(processingDtsByTitle));
-        })
-        .catch((err) => {         
-            callSendAPI(sender_psid, { text: err.message });
-        });
-    } else if(SUBSCRIPTION_KEYWORDS.includes(received_message.text.toLowerCase())) {
-        callSendAPI(sender_psid, subscriptionOptions(sender_psid));
-    } else if(UNSUBSCRIBE_KEYWORDS.includes(received_message.text.toLowerCase())) {
-        callSendAPI(sender_psid, unsubscribeOptions(sender_psid));
-    } else if(HELP_KEYWORDS.includes(received_message.text.toLowerCase())) {
-        callSendAPI(sender_psid, { text: constants.HELP_MSG });
-    } else {
-        callSendAPI(sender_psid, quickReplyOptions(constants.ERR_MSG));
-    }
+    if(typeof received_message.text !== "undefined") {
+        let message = received_message.text.toLowerCase();
+        if(WELCOME_KEYWORDS.includes(message)) {
+            callSendAPI(sender_psid, quickReplyOptions(constants.WELCOME_MSG));
+        } else if(DBEI_KEYWORDS.includes(message)) {
+            currentProcessingDts(sender_psid);
+        } else if(SUBSCRIPTION_KEYWORDS.includes(message)) {
+            callSendAPI(sender_psid, subscriptionOptions(sender_psid));
+        } else if(UNSUBSCRIBE_KEYWORDS.includes(message)) {
+            callSendAPI(sender_psid, unsubscribeOptions(sender_psid));
+        } else if(HELP_KEYWORDS.includes(message)) {
+            callSendAPI(sender_psid, { text: constants.HELP_MSG });
+        } else {
+            callSendAPI(sender_psid, quickReplyOptions(constants.ERR_MSG));
+        }
+    }    
 }
 
 module.exports = {
