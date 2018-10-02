@@ -25,7 +25,14 @@ function listTemplate(elements) {
             "payload": {
                 "template_type": "list",
                 "top_element_style": "compact",
-                "elements": elements
+                "elements": elements,
+                "buttons": [
+                    {
+                        "title": "Donate", 
+                        "type": "web_url", 
+                        "url": 'https://www.paypal.me/harshadranganathan'
+                    }
+                ]
             }
         }
     };
